@@ -84,39 +84,46 @@ export default function CourseDetailPage() {
             </Link>
           </div>
           
-          <div className="grid lg:grid-cols-3 gap-12">
-            <div className="lg:col-span-2 space-y-8">
-              <div className="space-y-4">
-                <div className="flex items-center space-x-4">
-                  <Badge variant="secondary" className={`${
-                    course.category === "Personal Growth" ? "bg-secondary/10 text-secondary" :
-                    course.category === "Career Advancement" ? "bg-primary/10 text-primary" :
-                    "bg-accent/10 text-accent"
-                  }`} data-testid="course-category-badge">
-                    {course.category}
+          {/* Hero Section */}
+          <div className="grid lg:grid-cols-2 gap-12 items-center mb-16">
+            <div className="space-y-6">
+              <div className="flex items-center space-x-4">
+                <Badge variant="secondary" className={`${
+                  course.category === "Personal Growth" ? "bg-secondary/10 text-secondary" :
+                  course.category === "Career Advancement" ? "bg-primary/10 text-primary" :
+                  "bg-accent/10 text-accent"
+                }`} data-testid="course-category-badge">
+                  {course.category}
+                </Badge>
+                {course.popular === "true" && (
+                  <Badge className="bg-accent text-accent-foreground" data-testid="course-popular-badge">
+                    Most Popular
                   </Badge>
-                  {course.popular === "true" && (
-                    <Badge className="bg-accent text-accent-foreground" data-testid="course-popular-badge">
-                      Most Popular
-                    </Badge>
-                  )}
-                </div>
-                
-                <h1 className="text-4xl lg:text-5xl font-bold text-foreground" data-testid="course-title">
-                  {course.title}
-                </h1>
-                
-                <p className="text-xl text-muted-foreground leading-relaxed" data-testid="course-description">
-                  {course.description}
-                </p>
+                )}
               </div>
               
+              <h1 className="text-4xl lg:text-5xl font-bold text-foreground" data-testid="course-title">
+                {course.title}
+              </h1>
+              
+              <p className="text-xl text-muted-foreground leading-relaxed" data-testid="course-description">
+                {course.description}
+              </p>
+            </div>
+            
+            <div className="relative">
               <img 
                 src={course.image} 
                 alt={`${course.title} course illustration`}
                 className="w-full h-64 lg:h-96 object-cover rounded-2xl shadow-lg"
                 data-testid="course-hero-image"
               />
+            </div>
+          </div>
+
+          {/* Content and Sidebar */}
+          <div className="grid lg:grid-cols-3 gap-12">
+            <div className="lg:col-span-2 space-y-8">
               
               <Card data-testid="course-features-card">
                 <CardContent className="p-8">
