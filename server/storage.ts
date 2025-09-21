@@ -1,18 +1,30 @@
-import { type Course, type InsertCourse, type Inquiry, type InsertInquiry, courses, inquiries } from "@shared/schema";
-import { db } from "./db";
+import { type Course, type InsertCourse, type Inquiry, type InsertInquiry, type User, type InsertUser, courses, inquiries, users } from "@shared/schema";
+import { db, pool } from "./db";
 import { eq } from "drizzle-orm";
+import session from "express-session";
+import { randomUUID } from "crypto";
+import connectPg from "connect-pg-simple";
 
 export interface IStorage {
   // Course methods
   getCourses(): Promise<Course[]>;
   getCourse(id: string): Promise<Course | undefined>;
   
+  // User methods
+  getUser(id: number): Promise<User | undefined>;
+  getUserByUsername(username: string): Promise<User | undefined>;
+  getUserByEmail(email: string): Promise<User | undefined>;
+  createUser(insertUser: InsertUser): Promise<User>;
+  
   // Inquiry methods
   createInquiry(inquiry: InsertInquiry): Promise<Inquiry>;
   getInquiries(): Promise<Inquiry[]>;
+  
+  // Session store
+  sessionStore: session.Store;
 }
 
-export class MemStorage implements IStorage {
+/* export class MemStorage implements IStorage {
   private courses: Map<string, Course>;
   private inquiries: Map<string, Inquiry>;
 
@@ -102,9 +114,20 @@ export class MemStorage implements IStorage {
   async getInquiries(): Promise<Inquiry[]> {
     return Array.from(this.inquiries.values());
   }
-}
+} */
 
 export class DatabaseStorage implements IStorage {
+  sessionStore: session.Store;
+
+  constructor() {
+    // Setup session store for PostgreSQL
+    const PostgresSessionStore = connectPg(session);
+    this.sessionStore = new PostgresSessionStore({
+      pool,
+      createTableIfMissing: true,
+    });
+  }
+
   async getCourses(): Promise<Course[]> {
     return await db.select().from(courses);
   }
@@ -112,6 +135,29 @@ export class DatabaseStorage implements IStorage {
   async getCourse(id: string): Promise<Course | undefined> {
     const [course] = await db.select().from(courses).where(eq(courses.id, id));
     return course || undefined;
+  }
+
+  async getUser(id: number): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user || undefined;
+  }
+
+  async getUserByUsername(username: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.username, username));
+    return user || undefined;
+  }
+
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.email, email));
+    return user || undefined;
+  }
+
+  async createUser(insertUser: InsertUser): Promise<User> {
+    const [user] = await db
+      .insert(users)
+      .values(insertUser)
+      .returning();
+    return user;
   }
 
   async createInquiry(insertInquiry: InsertInquiry): Promise<Inquiry> {
