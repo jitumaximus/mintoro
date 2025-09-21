@@ -1,5 +1,4 @@
 import { Card, CardContent } from "@/components/ui/card";
-import { Linkedin, Twitter } from "lucide-react";
 
 interface TeamMemberProps {
   name: string;
@@ -24,17 +23,9 @@ export default function TeamMember({ name, position, description, image }: TeamM
         <p className="text-primary font-medium mb-4" data-testid="team-member-position">
           {position}
         </p>
-        <p className="text-muted-foreground mb-6" data-testid="team-member-description">
+        <p className="text-muted-foreground" data-testid="team-member-description">
           {description}
         </p>
-        <div className="flex justify-center space-x-4">
-          <button className="text-primary hover:text-primary/80 transition-colors" data-testid="social-linkedin">
-            <Linkedin className="h-5 w-5" />
-          </button>
-          <button className="text-primary hover:text-primary/80 transition-colors" data-testid="social-twitter">
-            <Twitter className="h-5 w-5" />
-          </button>
-        </div>
       </CardContent>
     </Card>
   );

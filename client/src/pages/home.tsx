@@ -3,7 +3,6 @@ import Navigation from "@/components/navigation";
 import Hero from "@/components/hero";
 import CourseCard from "@/components/course-card";
 import TestimonialCard from "@/components/testimonial-card";
-import TeamMember from "@/components/team-member";
 import Footer from "@/components/footer";
 import { CheckCircle, Target, Eye, Star } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
@@ -33,26 +32,6 @@ const testimonials = [
   },
 ];
 
-const teamMembers = [
-  {
-    name: "Dr. Rajesh Kumar",
-    position: "Lead Personal Development Coach",
-    description: "Ph.D. in Psychology with 15+ years helping professionals unlock their potential and achieve breakthrough results.",
-    image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=300&h=300",
-  },
-  {
-    name: "Priya Sharma",
-    position: "Senior Career Strategist",
-    description: "Former Fortune 500 HR Director specializing in career transitions and executive coaching for ambitious professionals.",
-    image: "https://images.unsplash.com/photo-1494790108755-2616b612b47c?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=300&h=300",
-  },
-  {
-    name: "Arjun Patel",
-    position: "Wealth Management Expert",
-    description: "CFA with 20+ years in investment banking, helping individuals build sustainable wealth through strategic planning.",
-    image: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=300&h=300",
-  },
-];
 
 export default function HomePage() {
   const { data: courses, isLoading, error } = useQuery<Course[]>({
@@ -196,26 +175,6 @@ export default function HomePage() {
                 </Card>
               </div>
             </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Expert Team Section */}
-      <section className="py-20 bg-background" data-testid="team-section">
-        <div className="container mx-auto px-4">
-          <div className="text-center space-y-4 mb-16">
-            <h2 className="text-4xl lg:text-5xl font-bold text-foreground" data-testid="team-title">
-              Meet Our Expert Team
-            </h2>
-            <p className="text-xl text-muted-foreground max-w-3xl mx-auto" data-testid="team-description">
-              Industry veterans with decades of combined experience in personal development, career guidance, and financial planning
-            </p>
-          </div>
-          
-          <div className="grid lg:grid-cols-3 gap-8">
-            {teamMembers.map((member) => (
-              <TeamMember key={member.name} {...member} />
-            ))}
           </div>
         </div>
       </section>
