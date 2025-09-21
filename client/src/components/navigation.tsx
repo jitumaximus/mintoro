@@ -2,6 +2,7 @@ import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Menu } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import logoImage from "@assets/generated_images/Mintoro_educational_platform_logo_902fac0b.png";
 
 export default function Navigation() {
   const [location] = useLocation();
@@ -19,9 +20,11 @@ export default function Navigation() {
         <div className="flex items-center justify-between">
           <Link href="/" data-testid="logo-link">
             <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
-                <span className="text-primary-foreground font-bold text-lg">M</span>
-              </div>
+              <img 
+                src={logoImage} 
+                alt="Mintoro Logo" 
+                className="w-12 h-12 rounded-lg object-contain"
+              />
               <span className="text-2xl font-bold text-primary">Mintoro</span>
             </div>
           </Link>
