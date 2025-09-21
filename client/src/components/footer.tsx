@@ -1,4 +1,5 @@
 import { Link } from "wouter";
+import logoImage from "@assets/generated_images/Mintoro_educational_platform_logo_902fac0b.png";
 
 export default function Footer() {
   return (
@@ -8,9 +9,11 @@ export default function Footer() {
           <div className="space-y-6">
             <Link href="/" data-testid="footer-logo">
               <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 bg-primary-foreground/20 rounded-lg flex items-center justify-center">
-                  <span className="text-primary-foreground font-bold text-lg">M</span>
-                </div>
+                <img 
+                  src={logoImage} 
+                  alt="Mintoro Logo" 
+                  className="w-12 h-12 rounded-lg object-contain"
+                />
                 <span className="text-2xl font-bold">Mintoro</span>
               </div>
             </Link>
@@ -22,25 +25,17 @@ export default function Footer() {
           <div className="space-y-6">
             <h3 className="text-xl font-bold" data-testid="footer-courses-title">Courses</h3>
             <div className="space-y-3">
-              <Link href="/courses/personal-development" data-testid="footer-link-personal-development">
-                <a className="block text-primary-foreground/80 hover:text-primary-foreground transition-colors">
-                  Personal Development
-                </a>
+              <Link href="/courses/personal-development" data-testid="footer-link-personal-development" className="block text-primary-foreground/80 hover:text-primary-foreground transition-colors">
+                Personal Development
               </Link>
-              <Link href="/courses/career-counselling" data-testid="footer-link-career-counselling">
-                <a className="block text-primary-foreground/80 hover:text-primary-foreground transition-colors">
-                  Career Counselling
-                </a>
+              <Link href="/courses/career-counselling" data-testid="footer-link-career-counselling" className="block text-primary-foreground/80 hover:text-primary-foreground transition-colors">
+                Career Counselling
               </Link>
-              <Link href="/courses/financial-freedom" data-testid="footer-link-financial-freedom">
-                <a className="block text-primary-foreground/80 hover:text-primary-foreground transition-colors">
-                  Financial Freedom
-                </a>
+              <Link href="/courses/financial-freedom" data-testid="footer-link-financial-freedom" className="block text-primary-foreground/80 hover:text-primary-foreground transition-colors">
+                Financial Freedom
               </Link>
-              <Link href="/courses" data-testid="footer-link-course-comparison">
-                <a className="block text-primary-foreground/80 hover:text-primary-foreground transition-colors">
-                  Course Comparison
-                </a>
+              <Link href="/courses" data-testid="footer-link-course-comparison" className="block text-primary-foreground/80 hover:text-primary-foreground transition-colors">
+                Course Comparison
               </Link>
             </div>
           </div>
@@ -48,15 +43,11 @@ export default function Footer() {
           <div className="space-y-6">
             <h3 className="text-xl font-bold" data-testid="footer-company-title">Company</h3>
             <div className="space-y-3">
-              <Link href="/about" data-testid="footer-link-about">
-                <a className="block text-primary-foreground/80 hover:text-primary-foreground transition-colors">
-                  About Us
-                </a>
+              <Link href="/about" data-testid="footer-link-about" className="block text-primary-foreground/80 hover:text-primary-foreground transition-colors">
+                About Us
               </Link>
-              <Link href="/#testimonials" data-testid="footer-link-success-stories">
-                <a className="block text-primary-foreground/80 hover:text-primary-foreground transition-colors">
-                  Success Stories
-                </a>
+              <Link href="/#testimonials" data-testid="footer-link-success-stories" className="block text-primary-foreground/80 hover:text-primary-foreground transition-colors">
+                Success Stories
               </Link>
             </div>
           </div>
@@ -64,10 +55,8 @@ export default function Footer() {
           <div className="space-y-6">
             <h3 className="text-xl font-bold" data-testid="footer-support-title">Support</h3>
             <div className="space-y-3">
-              <Link href="/contact" data-testid="footer-link-contact">
-                <a className="block text-primary-foreground/80 hover:text-primary-foreground transition-colors">
-                  Contact Us
-                </a>
+              <Link href="/contact" data-testid="footer-link-contact" className="block text-primary-foreground/80 hover:text-primary-foreground transition-colors">
+                Contact Us
               </Link>
               <a href="#" className="block text-primary-foreground/80 hover:text-primary-foreground transition-colors" data-testid="footer-link-faq">
                 FAQ
@@ -85,7 +74,7 @@ export default function Footer() {
         <div className="border-t border-primary-foreground/20 mt-12 pt-8">
           <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
             <p className="text-primary-foreground/80" data-testid="footer-copyright">
-              © 2024 Mintoro. All rights reserved.
+              © 2025 Mintoro. All rights reserved.
             </p>
             <div className="flex items-center space-x-6">
               <a href="#" className="text-primary-foreground/80 hover:text-primary-foreground transition-colors" data-testid="footer-privacy-link">

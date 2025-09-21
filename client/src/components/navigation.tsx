@@ -23,7 +23,7 @@ export default function Navigation() {
               <img 
                 src={logoImage} 
                 alt="Mintoro Logo" 
-                className="w-12 h-12 rounded-lg object-contain"
+                className="w-16 h-16 rounded-lg object-contain"
               />
               <span className="text-2xl font-bold text-primary">Mintoro</span>
             </div>

@@ -24,7 +24,7 @@ export default function Hero() {
                 </Button>
               </Link>
               <Link href="/contact" data-testid="button-book-consultation">
-                <Button variant="outline" className="border-2 border-primary-foreground/20 hover:bg-primary-foreground/10 text-primary-foreground px-8 py-4 text-lg">
+                <Button variant="outline" className="border-2 border-white/30 hover:bg-white/10 text-white hover:text-white px-8 py-4 text-lg">
                   Book Free Consultation
                 </Button>
               </Link>
