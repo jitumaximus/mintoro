@@ -1,5 +1,6 @@
-import { type Course, type InsertCourse, type Inquiry, type InsertInquiry } from "@shared/schema";
-import { randomUUID } from "crypto";
+import { type Course, type InsertCourse, type Inquiry, type InsertInquiry, courses, inquiries } from "@shared/schema";
+import { db } from "./db";
+import { eq } from "drizzle-orm";
 
 export interface IStorage {
   // Course methods
@@ -103,4 +104,27 @@ export class MemStorage implements IStorage {
   }
 }
 
-export const storage = new MemStorage();
+export class DatabaseStorage implements IStorage {
+  async getCourses(): Promise<Course[]> {
+    return await db.select().from(courses);
+  }
+
+  async getCourse(id: string): Promise<Course | undefined> {
+    const [course] = await db.select().from(courses).where(eq(courses.id, id));
+    return course || undefined;
+  }
+
+  async createInquiry(insertInquiry: InsertInquiry): Promise<Inquiry> {
+    const [inquiry] = await db
+      .insert(inquiries)
+      .values(insertInquiry)
+      .returning();
+    return inquiry;
+  }
+
+  async getInquiries(): Promise<Inquiry[]> {
+    return await db.select().from(inquiries);
+  }
+}
+
+export const storage = new DatabaseStorage();
