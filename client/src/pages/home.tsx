@@ -13,21 +13,18 @@ const testimonials = [
     name: "Sarah Johnson",
     position: "Marketing Director, Tech Corp",
     content: "The Personal Development course completely transformed my mindset. Within 6 months, I got promoted to a senior management role. The investment was worth every penny!",
-    image: "https://images.unsplash.com/photo-1517841905240-472988babdf9?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=150&h=150",
     rating: 5,
   },
   {
     name: "Amit Verma",
     position: "Product Manager, Startup",
     content: "Mintoro's Career Counselling program helped me transition from engineering to product management seamlessly. The guidance was exceptional and practical.",
-    image: "https://images.unsplash.com/photo-1599566150163-29194dcaad36?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=150&h=150",
     rating: 5,
   },
   {
     name: "Ravi Gupta",
     position: "Business Owner & Investor",
     content: "The Financial Freedom course taught me investment strategies that increased my portfolio by 300% in two years. Best educational investment I've ever made!",
-    image: "https://images.unsplash.com/photo-1556157382-97eda2d62296?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=150&h=150",
     rating: 5,
   },
 ];

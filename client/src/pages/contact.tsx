@@ -2,7 +2,7 @@ import Navigation from "@/components/navigation";
 import Footer from "@/components/footer";
 import ContactForm from "@/components/contact-form";
 import { Card, CardContent } from "@/components/ui/card";
-import { Phone, Mail, MapPin, CheckCircle } from "lucide-react";
+import { Mail, MapPin, CheckCircle } from "lucide-react";
 
 export default function ContactPage() {
   return (
@@ -36,23 +36,13 @@ export default function ContactPage() {
               </div>
               
               <div className="space-y-6">
-                <div className="flex items-center space-x-4" data-testid="contact-phone">
-                  <div className="w-12 h-12 bg-primary rounded-xl flex items-center justify-center">
-                    <Phone className="h-6 w-6 text-primary-foreground" />
-                  </div>
-                  <div>
-                    <div className="font-semibold text-foreground">Phone</div>
-                    <div className="text-muted-foreground">+91 98765 43210</div>
-                  </div>
-                </div>
-                
                 <div className="flex items-center space-x-4" data-testid="contact-email">
                   <div className="w-12 h-12 bg-secondary rounded-xl flex items-center justify-center">
                     <Mail className="h-6 w-6 text-secondary-foreground" />
                   </div>
                   <div>
                     <div className="font-semibold text-foreground">Email</div>
-                    <div className="text-muted-foreground">info@mintoro.com</div>
+                    <div className="text-muted-foreground">contact@mintoro.app</div>
                   </div>
                 </div>
                 
@@ -62,7 +52,7 @@ export default function ContactPage() {
                   </div>
                   <div>
                     <div className="font-semibold text-foreground">Office</div>
-                    <div className="text-muted-foreground">Mumbai, Maharashtra, India</div>
+                    <div className="text-muted-foreground">Faridabad, Haryana</div>
                   </div>
                 </div>
               </div>

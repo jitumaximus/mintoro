@@ -5,11 +5,10 @@ interface TestimonialCardProps {
   name: string;
   position: string;
   content: string;
-  image: string;
   rating: number;
 }
 
-export default function TestimonialCard({ name, position, content, image, rating }: TestimonialCardProps) {
+export default function TestimonialCard({ name, position, content, rating }: TestimonialCardProps) {
   return (
     <Card className="p-8" data-testid={`testimonial-${name.replace(/\s+/g, '-').toLowerCase()}`}>
       <CardContent className="p-0">
@@ -23,20 +22,12 @@ export default function TestimonialCard({ name, position, content, image, rating
             "{content}"
           </p>
         </div>
-        <div className="flex items-center space-x-4">
-          <img 
-            src={image} 
-            alt={`${name} headshot`}
-            className="w-16 h-16 rounded-full object-cover"
-            data-testid="testimonial-image"
-          />
-          <div>
-            <div className="font-semibold text-foreground" data-testid="testimonial-name">
-              {name}
-            </div>
-            <div className="text-muted-foreground text-sm" data-testid="testimonial-position">
-              {position}
-            </div>
+        <div>
+          <div className="font-semibold text-foreground" data-testid="testimonial-name">
+            {name}
+          </div>
+          <div className="text-muted-foreground text-sm" data-testid="testimonial-position">
+            {position}
           </div>
         </div>
       </CardContent>

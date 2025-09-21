@@ -29,7 +29,7 @@ export const inquiries = pgTable("inquiries", {
   firstName: text("first_name").notNull(),
   lastName: text("last_name").notNull(),
   email: text("email").notNull(),
-  phone: text("phone").notNull(),
+  phone: text("phone"),
   courseInterest: text("course_interest").notNull(),
   profession: text("profession"),
   message: text("message"),

@@ -15,7 +15,6 @@ export default function ContactForm() {
     firstName: "",
     lastName: "",
     email: "",
-    phone: "",
     courseInterest: "",
     profession: "",
     message: "",
@@ -35,7 +34,6 @@ export default function ContactForm() {
         firstName: "",
         lastName: "",
         email: "",
-        phone: "",
         courseInterest: "",
         profession: "",
         message: "",
@@ -54,7 +52,7 @@ export default function ContactForm() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.firstName || !formData.lastName || !formData.email || !formData.phone || !formData.courseInterest) {
+    if (!formData.firstName || !formData.lastName || !formData.email || !formData.courseInterest) {
       toast({
         title: "Validation Error",
         description: "Please fill in all required fields.",
@@ -120,21 +118,6 @@ export default function ContactForm() {
               placeholder="john.doe@email.com"
               required
               data-testid="input-email"
-            />
-          </div>
-          
-          <div>
-            <Label htmlFor="phone" className="text-foreground font-medium">
-              Phone Number *
-            </Label>
-            <Input
-              id="phone"
-              type="tel"
-              value={formData.phone}
-              onChange={(e) => handleInputChange("phone", e.target.value)}
-              placeholder="+91 98765 43210"
-              required
-              data-testid="input-phone"
             />
           </div>
           
