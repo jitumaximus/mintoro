@@ -19,13 +19,12 @@ export default function Navigation() {
       <nav className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-between">
           <Link href="/" data-testid="logo-link">
-            <div className="flex items-center space-x-3">
+            <div className="flex items-center">
               <img 
                 src={logoImage} 
                 alt="Mintoro Logo" 
-                className="w-16 h-16 rounded-lg object-contain"
+                className="w-20 h-20 rounded-lg object-contain"
               />
-              <span className="text-2xl font-bold text-primary">Mintoro</span>
             </div>
           </Link>
           
