@@ -16,14 +16,14 @@ export default function Navigation() {
 
   return (
     <header className="bg-card border-b border-border sticky top-0 z-50 shadow-sm">
-      <nav className="container mx-auto px-4 py-4">
+      <nav className="container mx-auto px-4 py-1">
         <div className="flex items-center justify-between">
           <Link href="/" data-testid="logo-link">
             <div className="flex items-center">
               <img 
                 src={logoImage} 
                 alt="Mintoro Logo" 
-                className="w-20 h-20 rounded-lg object-contain"
+                className="h-20 w-auto object-contain"
               />
             </div>
           </Link>
