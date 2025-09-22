@@ -15,17 +15,19 @@ export default function Navigation() {
   ];
 
   return (
-    <header className="bg-card border-b border-border sticky top-0 z-50 shadow-sm">
-      <nav className="container mx-auto px-4 py-1">
-        <div className="flex items-center justify-between">
-          <Link href="/" data-testid="logo-link">
-            <div className="flex items-center">
-              <img 
-                src={logoImage} 
-                alt="Mintoro Logo" 
-                className="h-20 w-auto object-contain"
-              />
-            </div>
+    <header className="bg-card border-b border-border sticky top-0 z-50 shadow-sm h-32">
+      <nav className="container mx-auto px-4 h-full">
+        <div className="flex items-center justify-between h-full">
+          <Link href="/" data-testid="logo-link" className="h-full p-0">
+            <div 
+              className="h-full w-32 bg-center bg-no-repeat flex items-center" 
+              style={{ 
+                backgroundImage: `url(${logoImage})`, 
+                backgroundSize: '180% auto' 
+              }}
+              role="img"
+              aria-label="Mintoro Logo"
+            />
           </Link>
           
           <div className="hidden md:flex items-center space-x-8">
