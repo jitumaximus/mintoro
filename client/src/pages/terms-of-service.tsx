@@ -25,9 +25,6 @@ export default function TermsOfService() {
           </h1>
           
           <div className="prose prose-lg dark:prose-invert max-w-none">
-            <p className="text-muted-foreground mb-6" data-testid="text-last-updated">
-              <strong>Last Updated:</strong> September 23, 2025
-            </p>
 
             <section className="mb-8">
               <h2 className="text-2xl font-semibold mb-4">1. Acceptance of Terms and Eligibility</h2>

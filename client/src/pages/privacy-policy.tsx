@@ -25,9 +25,6 @@ export default function PrivacyPolicy() {
           </h1>
           
           <div className="prose prose-lg dark:prose-invert max-w-none">
-            <p className="text-muted-foreground mb-6" data-testid="text-last-updated">
-              <strong>Last Updated:</strong> September 23, 2025
-            </p>
 
             <section className="mb-8">
               <h2 className="text-2xl font-semibold mb-4">1. Data Controller and Contact Information</h2>
@@ -231,7 +228,7 @@ export default function PrivacyPolicy() {
             <section className="mb-8">
               <h2 className="text-2xl font-semibold mb-4">12. Changes to This Privacy Policy</h2>
               <p className="text-muted-foreground leading-relaxed">
-                We may update this Privacy Policy from time to time. We will notify you of any material changes by posting the new Privacy Policy on this page and updating the "Last Updated" date. Your continued use of our services after such modifications constitutes acceptance of the updated Privacy Policy.
+                We may update this Privacy Policy from time to time. We will notify you of any material changes by posting the new Privacy Policy on this page. Your continued use of our services after such modifications constitutes acceptance of the updated Privacy Policy.
               </p>
             </section>
 
