@@ -4,6 +4,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/hooks/use-auth";
+import ScrollToTop from "@/components/scroll-to-top";
 import HomePage from "./pages/home";
 import CoursesPage from "./pages/courses";
 import CourseDetailPage from "./pages/course-detail";
@@ -16,17 +17,20 @@ import NotFound from "./pages/not-found";
 
 function Router() {
   return (
-    <Switch>
-      <Route path="/" component={HomePage} />
-      <Route path="/courses" component={CoursesPage} />
-      <Route path="/courses/:id" component={CourseDetailPage} />
-      <Route path="/about" component={AboutPage} />
-      <Route path="/contact" component={ContactPage} />
-      <Route path="/auth" component={AuthPage} />
-      <Route path="/privacy-policy" component={PrivacyPolicyPage} />
-      <Route path="/terms-of-service" component={TermsOfServicePage} />
-      <Route component={NotFound} />
-    </Switch>
+    <>
+      <ScrollToTop />
+      <Switch>
+        <Route path="/" component={HomePage} />
+        <Route path="/courses" component={CoursesPage} />
+        <Route path="/courses/:id" component={CourseDetailPage} />
+        <Route path="/about" component={AboutPage} />
+        <Route path="/contact" component={ContactPage} />
+        <Route path="/auth" component={AuthPage} />
+        <Route path="/privacy-policy" component={PrivacyPolicyPage} />
+        <Route path="/terms-of-service" component={TermsOfServicePage} />
+        <Route component={NotFound} />
+      </Switch>
+    </>
   );
 }
 
