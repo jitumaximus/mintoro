@@ -13,7 +13,7 @@ export default function CourseDetailPage() {
   const courseId = params.id;
 
   const { data: course, isLoading, error } = useQuery<Course>({
-    queryKey: ["/api/courses", courseId],
+    queryKey: [`/api/courses/${courseId}`],
   });
 
   if (error) {
