@@ -61,12 +61,12 @@ export default function Footer() {
               <a href="#" className="block text-primary-foreground/80 hover:text-primary-foreground transition-colors" data-testid="footer-link-faq">
                 FAQ
               </a>
-              <a href="#" className="block text-primary-foreground/80 hover:text-primary-foreground transition-colors" data-testid="footer-link-privacy">
+              <Link href="/privacy-policy" className="block text-primary-foreground/80 hover:text-primary-foreground transition-colors" data-testid="footer-link-privacy">
                 Privacy Policy
-              </a>
-              <a href="#" className="block text-primary-foreground/80 hover:text-primary-foreground transition-colors" data-testid="footer-link-terms">
+              </Link>
+              <Link href="/terms-of-service" className="block text-primary-foreground/80 hover:text-primary-foreground transition-colors" data-testid="footer-link-terms">
                 Terms of Service
-              </a>
+              </Link>
             </div>
           </div>
         </div>
@@ -77,12 +77,12 @@ export default function Footer() {
               © 2025 Mintoro. All rights reserved.
             </p>
             <div className="flex items-center space-x-6">
-              <a href="#" className="text-primary-foreground/80 hover:text-primary-foreground transition-colors" data-testid="footer-privacy-link">
+              <Link href="/privacy-policy" className="text-primary-foreground/80 hover:text-primary-foreground transition-colors" data-testid="footer-privacy-link">
                 Privacy
-              </a>
-              <a href="#" className="text-primary-foreground/80 hover:text-primary-foreground transition-colors" data-testid="footer-terms-link">
+              </Link>
+              <Link href="/terms-of-service" className="text-primary-foreground/80 hover:text-primary-foreground transition-colors" data-testid="footer-terms-link">
                 Terms
-              </a>
+              </Link>
               <a href="#" className="text-primary-foreground/80 hover:text-primary-foreground transition-colors" data-testid="footer-cookies-link">
                 Cookies
               </a>
