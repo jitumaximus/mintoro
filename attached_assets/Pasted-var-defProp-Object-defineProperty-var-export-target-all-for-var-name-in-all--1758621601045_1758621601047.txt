@@ -1,0 +1,456 @@
+var __defProp = Object.defineProperty;
+var __export = (target, all) => {
+  for (var name in all)
+    __defProp(target, name, { get: all[name], enumerable: true });
+};
+
+// server/index.ts
+import express2 from "express";
+
+// server/routes.ts
+import { createServer } from "http";
+
+// shared/schema.ts
+var schema_exports = {};
+__export(schema_exports, {
+  courses: () => courses,
+  inquiries: () => inquiries,
+  insertCourseSchema: () => insertCourseSchema,
+  insertInquirySchema: () => insertInquirySchema,
+  insertUserSchema: () => insertUserSchema,
+  users: () => users
+});
+import { sql } from "drizzle-orm";
+import { pgTable, text, varchar, timestamp, integer, serial } from "drizzle-orm/pg-core";
+import { createInsertSchema } from "drizzle-zod";
+import { z } from "zod";
+var courses = pgTable("courses", {
+  id: varchar("id").primaryKey(),
+  title: text("title").notNull(),
+  description: text("description").notNull(),
+  price: integer("price").notNull(),
+  category: text("category").notNull(),
+  features: text("features").array().notNull(),
+  image: text("image").notNull(),
+  popular: text("popular").default("false")
+});
+var users = pgTable("users", {
+  id: serial("id").primaryKey(),
+  username: text("username").notNull().unique(),
+  email: text("email").notNull().unique(),
+  password: text("password").notNull(),
+  firstName: text("first_name"),
+  lastName: text("last_name"),
+  createdAt: timestamp("created_at").defaultNow().notNull()
+});
+var inquiries = pgTable("inquiries", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  firstName: text("first_name").notNull(),
+  lastName: text("last_name").notNull(),
+  email: text("email").notNull(),
+  phone: text("phone"),
+  courseInterest: text("course_interest").notNull(),
+  profession: text("profession"),
+  message: text("message"),
+  createdAt: timestamp("created_at").defaultNow().notNull()
+});
+var insertCourseSchema = createInsertSchema(courses);
+var insertUserSchema = createInsertSchema(users).omit({
+  id: true,
+  createdAt: true
+}).extend({
+  email: z.string().email("Please enter a valid email address"),
+  password: z.string().min(8, "Password must be at least 8 characters long")
+});
+var insertInquirySchema = createInsertSchema(inquiries).omit({
+  id: true,
+  createdAt: true
+});
+
+// server/db.ts
+import { neon } from "@neondatabase/serverless";
+import { drizzle } from "drizzle-orm/neon-http";
+if (!process.env.DATABASE_URL) {
+  throw new Error(
+    "DATABASE_URL must be set. Did you forget to provision a database?"
+  );
+}
+var sql2 = neon(process.env.DATABASE_URL);
+var db = drizzle({ client: sql2, schema: schema_exports });
+
+// server/storage.ts
+import { eq } from "drizzle-orm";
+import session from "express-session";
+var DatabaseStorage = class {
+  sessionStore;
+  constructor() {
+    this.sessionStore = new session.MemoryStore();
+  }
+  async getCourses() {
+    return await db.select().from(courses);
+  }
+  async getCourse(id) {
+    const [course] = await db.select().from(courses).where(eq(courses.id, id));
+    return course || void 0;
+  }
+  async getUser(id) {
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user || void 0;
+  }
+  async getUserByUsername(username) {
+    const [user] = await db.select().from(users).where(eq(users.username, username));
+    return user || void 0;
+  }
+  async getUserByEmail(email) {
+    const [user] = await db.select().from(users).where(eq(users.email, email));
+    return user || void 0;
+  }
+  async createUser(insertUser) {
+    const [user] = await db.insert(users).values(insertUser).returning();
+    return user;
+  }
+  async createInquiry(insertInquiry) {
+    const [inquiry] = await db.insert(inquiries).values(insertInquiry).returning();
+    return inquiry;
+  }
+  async getInquiries() {
+    return await db.select().from(inquiries);
+  }
+};
+var storage = new DatabaseStorage();
+
+// server/auth.ts
+import passport from "passport";
+import { Strategy as LocalStrategy } from "passport-local";
+import session2 from "express-session";
+import { scrypt, randomBytes, timingSafeEqual } from "crypto";
+import { promisify } from "util";
+var scryptAsync = promisify(scrypt);
+async function hashPassword(password) {
+  const salt = randomBytes(16).toString("hex");
+  const buf = await scryptAsync(password, salt, 64);
+  return `${buf.toString("hex")}.${salt}`;
+}
+async function comparePasswords(supplied, stored) {
+  const [hashed, salt] = stored.split(".");
+  const hashedBuf = Buffer.from(hashed, "hex");
+  const suppliedBuf = await scryptAsync(supplied, salt, 64);
+  return timingSafeEqual(hashedBuf, suppliedBuf);
+}
+function setupAuth(app) {
+  if (!process.env.SESSION_SECRET || process.env.SESSION_SECRET.length < 32) {
+    throw new Error("SESSION_SECRET must be set and at least 32 characters long");
+  }
+  const sessionSettings = {
+    secret: process.env.SESSION_SECRET,
+    resave: false,
+    saveUninitialized: false,
+    store: storage.sessionStore,
+    cookie: {
+      secure: process.env.NODE_ENV === "production",
+      // HTTPS only in production
+      httpOnly: true,
+      maxAge: 1e3 * 60 * 60 * 24,
+      // 24 hours
+      sameSite: "lax"
+      // CSRF protection
+    }
+  };
+  app.set("trust proxy", 1);
+  app.use(session2(sessionSettings));
+  app.use(passport.initialize());
+  app.use(passport.session());
+  passport.use(
+    new LocalStrategy(async (username, password, done) => {
+      const user = await storage.getUserByUsername(username);
+      if (!user || !await comparePasswords(password, user.password)) {
+        return done(null, false);
+      } else {
+        return done(null, user);
+      }
+    })
+  );
+  passport.serializeUser((user, done) => done(null, user.id));
+  passport.deserializeUser(async (id, done) => {
+    const user = await storage.getUser(id);
+    done(null, user || false);
+  });
+  function toPublicUser(user) {
+    const { password, ...publicUser } = user;
+    return publicUser;
+  }
+  app.post("/api/register", async (req, res, next) => {
+    try {
+      const validatedData = insertUserSchema.parse(req.body);
+      const existingUser = await storage.getUserByUsername(validatedData.username);
+      if (existingUser) {
+        return res.status(400).json({ message: "Username already exists" });
+      }
+      const existingEmail = await storage.getUserByEmail && await storage.getUserByEmail(validatedData.email);
+      if (existingEmail) {
+        return res.status(400).json({ message: "Email already exists" });
+      }
+      const user = await storage.createUser({
+        ...validatedData,
+        password: await hashPassword(validatedData.password)
+      });
+      req.session.regenerate((sessionErr) => {
+        if (sessionErr) return next(sessionErr);
+        req.login(user, (err) => {
+          if (err) return next(err);
+          res.status(201).json(toPublicUser(user));
+        });
+      });
+    } catch (error) {
+      if (error instanceof Error) {
+        if (error.message.includes("duplicate key value violates unique constraint")) {
+          if (error.message.includes("username")) {
+            return res.status(400).json({ message: "Username already exists" });
+          }
+          if (error.message.includes("email")) {
+            return res.status(400).json({ message: "Email already exists" });
+          }
+        }
+        return res.status(400).json({ message: error.message });
+      }
+      return res.status(500).json({ message: "Registration failed" });
+    }
+  });
+  app.post("/api/login", passport.authenticate("local"), (req, res, next) => {
+    req.session.regenerate((sessionErr) => {
+      if (sessionErr) return next(sessionErr);
+      req.login(req.user, (err) => {
+        if (err) return next(err);
+        res.status(200).json(toPublicUser(req.user));
+      });
+    });
+  });
+  app.post("/api/logout", (req, res, next) => {
+    req.logout((err) => {
+      if (err) return next(err);
+      res.sendStatus(200);
+    });
+  });
+  app.get("/api/user", (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    res.json(toPublicUser(req.user));
+  });
+}
+
+// server/routes.ts
+async function registerRoutes(app) {
+  setupAuth(app);
+  app.get("/api/courses", async (_req, res) => {
+    try {
+      const courses2 = await storage.getCourses();
+      res.json(courses2);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch courses" });
+    }
+  });
+  app.get("/api/courses/:id", async (req, res) => {
+    try {
+      const course = await storage.getCourse(req.params.id);
+      if (!course) {
+        return res.status(404).json({ message: "Course not found" });
+      }
+      res.json(course);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch course" });
+    }
+  });
+  app.post("/api/inquiries", async (req, res) => {
+    try {
+      const validatedData = insertInquirySchema.parse(req.body);
+      const inquiry = await storage.createInquiry(validatedData);
+      res.status(201).json(inquiry);
+    } catch (error) {
+      if (error instanceof Error) {
+        res.status(400).json({ message: error.message });
+      } else {
+        res.status(500).json({ message: "Failed to create inquiry" });
+      }
+    }
+  });
+  app.get("/api/inquiries", async (_req, res) => {
+    try {
+      const inquiries2 = await storage.getInquiries();
+      res.json(inquiries2);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch inquiries" });
+    }
+  });
+  const httpServer = createServer(app);
+  return httpServer;
+}
+
+// server/vite.ts
+import express from "express";
+import fs from "fs";
+import path2 from "path";
+import { createServer as createViteServer, createLogger } from "vite";
+
+// vite.config.ts
+import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react";
+import path from "path";
+import runtimeErrorOverlay from "@replit/vite-plugin-runtime-error-modal";
+var vite_config_default = defineConfig({
+  plugins: [
+    react(),
+    runtimeErrorOverlay(),
+    ...process.env.NODE_ENV !== "production" && process.env.REPL_ID !== void 0 ? [
+      await import("@replit/vite-plugin-cartographer").then(
+        (m) => m.cartographer()
+      ),
+      await import("@replit/vite-plugin-dev-banner").then(
+        (m) => m.devBanner()
+      )
+    ] : []
+  ],
+  resolve: {
+    alias: {
+      "@": path.resolve(import.meta.dirname, "client", "src"),
+      "@shared": path.resolve(import.meta.dirname, "shared"),
+      "@assets": path.resolve(import.meta.dirname, "attached_assets")
+    }
+  },
+  root: path.resolve(import.meta.dirname, "client"),
+  build: {
+    outDir: path.resolve(import.meta.dirname, "dist/public"),
+    emptyOutDir: true
+  },
+  server: {
+    fs: {
+      strict: true,
+      deny: ["**/.*"]
+    }
+  }
+});
+
+// server/vite.ts
+import { nanoid } from "nanoid";
+var viteLogger = createLogger();
+function log(message, source = "express") {
+  const formattedTime = (/* @__PURE__ */ new Date()).toLocaleTimeString("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: true
+  });
+  console.log(`${formattedTime} [${source}] ${message}`);
+}
+async function setupVite(app, server) {
+  const serverOptions = {
+    middlewareMode: true,
+    hmr: { server },
+    allowedHosts: true
+  };
+  const vite = await createViteServer({
+    ...vite_config_default,
+    configFile: false,
+    customLogger: {
+      ...viteLogger,
+      error: (msg, options) => {
+        viteLogger.error(msg, options);
+        process.exit(1);
+      }
+    },
+    server: serverOptions,
+    appType: "custom"
+  });
+  app.use(vite.middlewares);
+  app.use("*", async (req, res, next) => {
+    const url = req.originalUrl;
+    try {
+      const clientTemplate = path2.resolve(
+        import.meta.dirname,
+        "..",
+        "client",
+        "index.html"
+      );
+      let template = await fs.promises.readFile(clientTemplate, "utf-8");
+      template = template.replace(
+        `src="/src/main.tsx"`,
+        `src="/src/main.tsx?v=${nanoid()}"`
+      );
+      const page = await vite.transformIndexHtml(url, template);
+      res.status(200).set({ "Content-Type": "text/html" }).end(page);
+    } catch (e) {
+      vite.ssrFixStacktrace(e);
+      next(e);
+    }
+  });
+}
+function serveStatic(app) {
+  const distPath = path2.resolve(import.meta.dirname, "public");
+  if (!fs.existsSync(distPath)) {
+    throw new Error(
+      `Could not find the build directory: ${distPath}, make sure to build the client first`
+    );
+  }
+  app.use(express.static(distPath));
+  app.use("*", (_req, res) => {
+    res.sendFile(path2.resolve(distPath, "index.html"));
+  });
+}
+
+// server/index.ts
+async function createServer2() {
+  const app = express2();
+  app.use(express2.json());
+  app.use(express2.urlencoded({ extended: false }));
+  app.use((req, res, next) => {
+    const start = Date.now();
+    const path3 = req.path;
+    let capturedJsonResponse = void 0;
+    const originalResJson = res.json;
+    res.json = function(bodyJson, ...args) {
+      capturedJsonResponse = bodyJson;
+      return originalResJson.apply(res, [bodyJson, ...args]);
+    };
+    res.on("finish", () => {
+      const duration = Date.now() - start;
+      if (path3.startsWith("/api")) {
+        let logLine = `${req.method} ${path3} ${res.statusCode} in ${duration}ms`;
+        if (capturedJsonResponse) {
+          logLine += ` :: ${JSON.stringify(capturedJsonResponse)}`;
+        }
+        if (logLine.length > 80) {
+          logLine = logLine.slice(0, 79) + "\u2026";
+        }
+        log(logLine);
+      }
+    });
+    next();
+  });
+  const server = await registerRoutes(app);
+  app.use((err, _req, res, _next) => {
+    const status = err.status || err.statusCode || 500;
+    const message = err.message || "Internal Server Error";
+    res.status(status).json({ message });
+    throw err;
+  });
+  if (app.get("env") === "development") {
+    await setupVite(app, server);
+  } else if (!process.env.VERCEL) {
+    serveStatic(app);
+  }
+  return { app, server };
+}
+if (!process.env.VERCEL) {
+  (async () => {
+    const { server } = await createServer2();
+    const port = parseInt(process.env.PORT || "5000", 10);
+    server.listen({
+      port,
+      host: "0.0.0.0",
+      reusePort: true
+    }, () => {
+      log(`serving on port ${port}`);
+    });
+  })();
+}
+export {
+  createServer2 as createServer
+};
