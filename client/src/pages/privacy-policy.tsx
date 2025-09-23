@@ -37,9 +37,8 @@ export default function PrivacyPolicy() {
               <div className="bg-muted p-4 rounded-lg mb-4">
                 <p className="font-medium">Data Controller Contact Details:</p>
                 <p className="text-muted-foreground">Mintoro Education Consulting Private Limited</p>
-                <p className="text-muted-foreground">Email: privacy@mintoro.com</p>
-                <p className="text-muted-foreground">Phone: +91-98765-43210</p>
-                <p className="text-muted-foreground">Address: 123 Business Park, Sector 18, Gurgaon, Haryana 122015, India</p>
+                <p className="text-muted-foreground">Email: contact@mintoro.com</p>
+                <p className="text-muted-foreground">Address: Faridabad, Haryana, India</p>
               </div>
             </section>
 
@@ -141,12 +140,12 @@ export default function PrivacyPolicy() {
                 <li>Withdraw consent (where processing is based on consent)</li>
               </ul>
               <p className="text-muted-foreground leading-relaxed mt-4">
-                To exercise these rights, please contact us at privacy@mintoro.com with proof of identity. We will respond within 30 days of receiving your request. If you are unsatisfied with our response, you have the right to lodge a complaint with the Data Protection Board of India.
+                To exercise these rights, please contact us at contact@mintoro.com with proof of identity. We will respond within 30 days of receiving your request. If you are unsatisfied with our response, you have the right to lodge a complaint with the Data Protection Board of India.
               </p>
               <div className="bg-muted p-4 rounded-lg mt-4">
                 <h4 className="font-medium mb-2">Data Subject Request Process:</h4>
                 <ol className="list-decimal list-inside text-muted-foreground space-y-1">
-                  <li>Send your request to privacy@mintoro.com</li>
+                  <li>Send your request to contact@mintoro.com</li>
                   <li>Include proof of identity (copy of government ID)</li>
                   <li>Specify the right you wish to exercise</li>
                   <li>We will acknowledge receipt within 72 hours</li>
@@ -167,7 +166,7 @@ export default function PrivacyPolicy() {
                 <li><strong>Parental Rights:</strong> Parents can review, modify, or delete their child's information at any time</li>
               </ul>
               <p className="text-muted-foreground leading-relaxed">
-                If you believe we have collected information from a child without proper consent, contact us immediately at privacy@mintoro.com.
+                If you believe we have collected information from a child without proper consent, contact us immediately at contact@mintoro.com.
               </p>
             </section>
             
@@ -243,10 +242,8 @@ export default function PrivacyPolicy() {
               </p>
               <div className="mt-4 p-4 bg-muted rounded-lg">
                 <p className="font-medium">Mintoro Education Consulting</p>
-                <p className="text-muted-foreground">Email: privacy@mintoro.com</p>
-                <p className="text-muted-foreground">Phone: +91-98765-43210</p>
-                <p className="text-muted-foreground">Address: 123 Business Park, Sector 18, Gurgaon, Haryana 122015, India</p>
-                <p className="text-muted-foreground">Data Protection Officer: dpo@mintoro.com</p>
+                <p className="text-muted-foreground">Email: contact@mintoro.com</p>
+                <p className="text-muted-foreground">Address: Faridabad, Haryana, India</p>
               </div>
             </section>
           </div>

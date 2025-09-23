@@ -64,7 +64,7 @@ export default function TermsOfService() {
               
               <h3 className="text-xl font-medium mb-3">Course Pricing</h3>
               <p className="text-muted-foreground leading-relaxed mb-4">
-                Current course pricing is available on our courses page at <a href="/courses" className="text-primary hover:underline">mintoro.com/courses</a>. Pricing may vary based on promotions, bundles, and payment plans offered at the time of enrollment.
+                Current course pricing is available on our courses page at <a href="/courses" className="text-primary hover:underline">mintoro.app/courses</a>. Pricing may vary based on promotions, bundles, and payment plans offered at the time of enrollment.
               </p>
 
               <h3 className="text-xl font-medium mb-3">Payment Terms</h3>
@@ -77,7 +77,7 @@ export default function TermsOfService() {
               </ul>
               <h3 className="text-xl font-medium mb-3">Chargebacks and Disputes</h3>
               <p className="text-muted-foreground leading-relaxed">
-                Unauthorized chargebacks may result in account suspension. Please contact our support team at support@mintoro.com before initiating any payment disputes to resolve issues amicably.
+                Unauthorized chargebacks may result in account suspension. Please contact our support team at contact@mintoro.com before initiating any payment disputes to resolve issues amicably.
               </p>
             </section>
 
@@ -91,7 +91,7 @@ export default function TermsOfService() {
 
               <h3 className="text-xl font-medium mb-3">Partial Refunds</h3>
               <p className="text-muted-foreground leading-relaxed mb-4">
-                After the cooling-off period, refunds may be considered on a case-by-case basis for extraordinary circumstances. Refund requests must be submitted in writing to support@mintoro.com.
+                After the cooling-off period, refunds may be considered on a case-by-case basis for extraordinary circumstances. Refund requests must be submitted in writing to contact@mintoro.com.
               </p>
 
               <h3 className="text-xl font-medium mb-3">Non-Refundable Items</h3>
@@ -214,7 +214,7 @@ export default function TermsOfService() {
               
               <h3 className="text-xl font-medium mb-3">Termination by You</h3>
               <p className="text-muted-foreground leading-relaxed mb-4">
-                You may close your account at any time by contacting support@mintoro.com. Account closure does not automatically entitle you to refunds for unused services.
+                You may close your account at any time by contacting contact@mintoro.com. Account closure does not automatically entitle you to refunds for unused services.
               </p>
               
               <h3 className="text-xl font-medium mb-3">Effect of Termination</h3>
@@ -238,15 +238,15 @@ export default function TermsOfService() {
               
               <h3 className="text-xl font-medium mb-3">Governing Law</h3>
               <p className="text-muted-foreground leading-relaxed mb-4">
-                These Terms are governed by the laws of India. Any disputes shall be subject to the exclusive jurisdiction of the courts in Gurgaon, Haryana, India.
+                These Terms are governed by the laws of India. Any disputes shall be subject to the exclusive jurisdiction of the courts in Faridabad, Haryana, India.
               </p>
               
               <h3 className="text-xl font-medium mb-3">Dispute Resolution Process</h3>
               <ol className="list-decimal list-inside text-muted-foreground space-y-2">
-                <li><strong>Direct Communication:</strong> Contact support@mintoro.com to resolve issues informally</li>
+                <li><strong>Direct Communication:</strong> Contact contact@mintoro.com to resolve issues informally</li>
                 <li><strong>Mediation:</strong> If direct resolution fails, disputes may be referred to mediation</li>
                 <li><strong>Arbitration:</strong> Unresolved disputes shall be settled by arbitration under the Arbitration and Conciliation Act, 2015</li>
-                <li><strong>Court Proceedings:</strong> As a final resort, disputes may be heard in Gurgaon courts</li>
+                <li><strong>Court Proceedings:</strong> As a final resort, disputes may be heard in Faridabad courts</li>
               </ol>
             </section>
 
@@ -264,11 +264,8 @@ export default function TermsOfService() {
               </p>
               <div className="mt-4 p-4 bg-muted rounded-lg">
                 <p className="font-medium">Mintoro Education Consulting</p>
-                <p className="text-muted-foreground">Email: legal@mintoro.com</p>
-                <p className="text-muted-foreground">Support: support@mintoro.com</p>
-                <p className="text-muted-foreground">Phone: +91-98765-43210</p>
-                <p className="text-muted-foreground">Address: 123 Business Park, Sector 18, Gurgaon, Haryana 122015, India</p>
-                <p className="text-muted-foreground">Business Registration: CIN U80903HR2023PTC112456</p>
+                <p className="text-muted-foreground">Email: contact@mintoro.com</p>
+                <p className="text-muted-foreground">Address: Faridabad, Haryana, India</p>
               </div>
             </section>
 
