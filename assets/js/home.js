@@ -34,7 +34,8 @@
     M.tick(q(hero, 'equity'), eq, function (v) { return M.money(v, 'USD'); });
     var ch = t.start_balance ? (eq / t.start_balance - 1) * 100 : null;
     var chEl = q(hero, 'change');
-    chEl.textContent = M.pct(ch, true) + ' since ' + M.dayMonth((books[0] || {}).since);
+    var first = (d.equity_total || [])[0] || books[0] || {};
+    chEl.textContent = M.pct(ch, true) + ' since ' + M.dayMonth(first.time || first.since);
     chEl.className = 'chg ' + (ch >= 0 ? 'accent' : 'red');
     var c = M.curve((d.equity_total || []).map(function (p) { return p.balance; }).concat([eq]), 400, 120, 8);
     if (c) {
@@ -51,7 +52,7 @@
     var byName = {};
     books.forEach(function (b) { byName[b.name] = b; });
     var poc = byName['POC RETURN'], lo = byName['1H RSI LONG'], sh = byName['1H RSI SHORT'];
-    q(hero, 'poc').textContent = poc ? (poc.open_position ? 'in trade' : 'watching ' + poc.watch_count) : '—';
+    q(hero, 'poc').textContent = poc ? (poc.open_position ? 'in trade' : poc.state === 'paused' ? 'paused' : 'watching ' + poc.watch_count) : '—';
     q(hero, 'long').textContent = lo ? (lo.open_position ? 'in trade' : lo.watch_count + ' armed') : '—';
     q(hero, 'short').textContent = sh ? (sh.open_position ? 'in trade' : sh.watch_count + ' armed') : '—';
   }

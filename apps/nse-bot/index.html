@@ -3,18 +3,18 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>NSE Bot Terminal · Mintoro</title>
+<title>NSE Bot · Live dashboard · Mintoro</title>
 <meta name="description" content="Live paper-trading dashboard of Mintoro's NSE bot: strategies, open trades, log and equity.">
 <meta name="theme-color" content="#F5F6F2" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0B0E12" media="(prefers-color-scheme: dark)">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
-<script src="/assets/js/theme-init.js?v=20261124"></script>
+<script src="/assets/js/theme-init.js?v=20261125"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=JetBrains+Mono:wght@400;500;600;700&amp;family=Space+Grotesk:wght@500;600;700&amp;display=swap">
-<link rel="stylesheet" href="/assets/css/site.css?v=20261124">
-<script src="/assets/js/site.js?v=20261124" defer></script>
-<script src="/assets/js/dashboard.js?v=20261124" defer></script>
+<link rel="stylesheet" href="/assets/css/site.css?v=20261125">
+<script src="/assets/js/site.js?v=20261125" defer></script>
+<script src="/assets/js/dashboard.js?v=20261125" defer></script>
 </head>
 <body class="dash" data-bot="nse">
 <a class="skip" href="#main">Skip to content</a>
@@ -33,41 +33,41 @@
     <div class="dash-id">
       <div class="face nse" aria-hidden="true"><svg width="54" height="40" viewBox="0 0 54 40"><rect x="8" y="4" width="11" height="28" rx="5.5"/><rect x="35" y="4" width="11" height="28" rx="5.5"/></svg></div>
       <div>
-        <div class="title-row"><h1><span class="accent">NSE</span> Bot Terminal</h1><span class="ver">fyers · paper</span></div>
+        <div class="title-row"><h1>NSE Bot <span class="sub">Live dashboard</span></h1><span class="ver">fyers · paper</span></div>
         <p class="run-line" data-f="run" aria-live="polite"><span class="dot" data-f="dot"></span><span data-f="runtext">connecting…</span> · <span data-clock>--:--:--</span> IST</p>
-        <p class="exec-chip" data-f="chip">WAITING FOR THE BOT SERVER</p>
+        <p class="exec-chip" data-f="chip">Waiting for the bot server</p>
       </div>
     </div>
     <div class="big4">
-      <div><div class="n" data-f="balance">—</div><div class="l">balance</div></div>
-      <div><div class="n muted" data-f="trades">—</div><div class="l">trades</div></div>
-      <div><div class="n accent" data-f="wins">—</div><div class="l">wins</div></div>
-      <div><div class="n red" data-f="losses">—</div><div class="l">losses</div></div>
+      <div><div class="n" data-f="balance">—</div><div class="l">Balance</div></div>
+      <div><div class="n muted" data-f="trades">—</div><div class="l">Trades</div></div>
+      <div><div class="n accent" data-f="wins">—</div><div class="l">Wins</div></div>
+      <div><div class="n red" data-f="losses">—</div><div class="l">Losses</div></div>
     </div>
   </section>
 
   <div class="dash-cols">
     <aside class="strategies" aria-label="Strategies">
-      <div class="label-row"><span>STRATEGIES</span><span data-f="online">—</span></div>
+      <div class="label-row"><span>Running strategies</span><span data-f="online">—</span></div>
       <div data-f="books"></div>
     </aside>
 
     <div class="dash-right">
       <section class="panel" aria-label="Live flow">
-        <div class="label-row"><span>LIVE FLOW · SCAN → ARM → TRIGGER → SIZE → EXEC → LOG</span><span data-f="watching">watching —</span></div>
+        <div class="label-row"><span>Live flow · scan → arm → trigger → size → execute → log</span><span data-f="watching">Watching —</span></div>
         <div class="watch-grid" data-f="watch"></div>
-        <div class="flow" aria-hidden="true"><div class="stage" data-stage="0"><div class="node"><div class="circle">01</div><span class="lbl">SCAN</span></div><div class="link" aria-hidden="true"></div></div><div class="stage" data-stage="1"><div class="node"><div class="circle">02</div><span class="lbl">ARM</span></div><div class="link" aria-hidden="true"></div></div><div class="stage" data-stage="2"><div class="node"><div class="circle">03</div><span class="lbl">TRIGGER</span></div><div class="link" aria-hidden="true"></div></div><div class="stage" data-stage="3"><div class="node"><div class="circle">04</div><span class="lbl">SIZE</span></div><div class="link" aria-hidden="true"></div></div><div class="stage" data-stage="4"><div class="node"><div class="circle">05</div><span class="lbl">EXEC</span></div><div class="link" aria-hidden="true"></div></div><div class="stage" data-stage="5"><div class="node"><div class="circle">06</div><span class="lbl">LOG</span></div></div></div>
+        <div class="flow" aria-hidden="true"><div class="stage" data-stage="0"><div class="node"><div class="circle">01</div><span class="lbl">Scan</span></div><div class="link" aria-hidden="true"></div></div><div class="stage" data-stage="1"><div class="node"><div class="circle">02</div><span class="lbl">Arm</span></div><div class="link" aria-hidden="true"></div></div><div class="stage" data-stage="2"><div class="node"><div class="circle">03</div><span class="lbl">Trigger</span></div><div class="link" aria-hidden="true"></div></div><div class="stage" data-stage="3"><div class="node"><div class="circle">04</div><span class="lbl">Size</span></div><div class="link" aria-hidden="true"></div></div><div class="stage" data-stage="4"><div class="node"><div class="circle">05</div><span class="lbl">Execute</span></div><div class="link" aria-hidden="true"></div></div><div class="stage" data-stage="5"><div class="node"><div class="circle">06</div><span class="lbl">Log</span></div></div></div>
         <div class="stat4">
-          <div><div class="k red">SKIPPED</div><div class="v" data-f="skipped">—</div><div class="s">in the last 40 log lines</div></div>
-          <div><div class="k violet">RISK / TRADE</div><div class="v">10% cap</div><div class="s">max loss per trade</div></div>
-          <div><div class="k warn">LOGGER</div><div class="v" data-f="lineno">—</div><div class="s">each with a reason</div></div>
-          <div><div class="k blue">LAST CLOSE</div><div class="v" data-f="lastclose">—</div><div class="s" data-f="lastclosenote">&nbsp;</div></div>
+          <div><div class="k red">Skipped</div><div class="v" data-f="skipped">—</div><div class="s">in the last 40 log lines</div></div>
+          <div><div class="k violet">Risk per trade</div><div class="v">10% cap</div><div class="s">max loss per trade</div></div>
+          <div><div class="k warn">Logger</div><div class="v" data-f="lineno">—</div><div class="s">each with a reason</div></div>
+          <div><div class="k blue">Last close</div><div class="v" data-f="lastclose">—</div><div class="s" data-f="lastclosenote">&nbsp;</div></div>
         </div>
       </section>
 
       <div class="pair">
         <section class="panel" aria-label="Open trades">
-          <div class="label-row"><span>TRADE · ENTRY VS NOW</span><span class="open-badge flat" data-f="openbadge">FLAT</span></div>
+          <div class="label-row"><span>Open trades · entry vs now</span><span class="open-badge flat" data-f="openbadge">Flat</span></div>
           <div data-f="trades-open"><p class="flat-msg">—</p></div>
         </section>
         <section class="panel log" aria-label="Live log">
@@ -78,15 +78,25 @@
       </div>
 
       <section class="panel eq" aria-label="Equity">
-        <div class="label-row"><span>EQUITY · START VS NOW · ALL BOOKS</span><span data-f="since">—</span></div>
-        <svg viewBox="0 0 1000 180" preserveAspectRatio="none" role="img" aria-label="Equity curve, all books">
+        <div class="label-row"><span>Equity · running strategies</span><span data-f="since">—</span></div>
+        <svg viewBox="0 0 1000 180" preserveAspectRatio="none" role="img" aria-label="Equity curve of the running strategies">
           <line class="eq-base" data-f="base" x1="0" y1="-10" x2="1000" y2="-10"/>
           <polygon class="eq-area" data-f="area" points=""/>
           <polyline class="eq-line" data-f="line" points=""/>
         </svg>
-        <div class="foot"><span><span class="muted">start</span> <span data-f="start">—</span></span><span><span class="muted">now</span> <span class="accent" data-f="now">—</span></span></div>
+        <div class="foot"><span><span class="muted">Start</span> <span data-f="start">—</span></span><span><span class="muted">Now</span> <span class="accent" data-f="now">—</span></span></div>
       </section>
-      <p class="dash-note">Paper trading. Every number, log line and the curve stream from the bot server every 5 seconds; times are IST.</p>
+      <section class="panel past" data-f="past" aria-label="Past strategies" hidden>
+        <div class="label-row"><span>Past strategies · paused and retired</span><span data-f="pastsum">—</span></div>
+        <p class="past-note">Not counted in the balance, trades, wins and losses above, or in the equity curve.</p>
+        <div class="table-scroll">
+          <table class="past-table">
+            <thead><tr><th scope="col">Strategy</th><th scope="col">Status</th><th scope="col">Active</th><th scope="col" class="num">Trades</th><th scope="col" class="num">Won / lost</th><th scope="col" class="num">Win rate</th><th scope="col" class="num">P&amp;L</th><th scope="col" class="num">Final balance</th></tr></thead>
+            <tbody data-f="pastrows"></tbody>
+          </table>
+        </div>
+      </section>
+      <p class="dash-note">Paper trading. Every number, log line and the curve stream from the bot server every 5 seconds. Headline numbers and the curve cover the running strategies only. Times are IST.</p>
     </div>
   </div>
 </main>

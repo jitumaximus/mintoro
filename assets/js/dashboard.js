@@ -5,6 +5,8 @@
   var BOT = document.body.getAttribute('data-bot');
   var POLL_MS = 5000, LOG_SHOW = 8, WATCH_SHOW = 5;
   var DESC = {
+    'BOOK JUMP': 'Order-book wall jumps (retired 23 Nov)',
+    'BJ ABSORB': 'Order-book wall absorption (retired 23 Nov)',
     'POC RETURN': 'US-session volume POC, limit entry when price returns',
     '1H RSI LONG': '1H RSI < 30, bullish divergence on 15m',
     '1H RSI SHORT': '1H RSI > 70, bearish divergence on 5m',
@@ -54,28 +56,32 @@
   }
   function chip(events) {
     var e = events.filter(function (x) { return x.kind === 'ENTRY' || x.kind === 'EXIT'; })[0];
-    if (!e) return events[0] ? 'LAST · ' + (KIND[events[0].kind] || events[0].kind) + ' ' + M.shortSym(events[0].symbol || '') : 'SCANNING';
-    if (e.kind === 'ENTRY') return 'EXECUTOR · ENTERED ' + M.shortSym(e.symbol) + ' · ' + evTime(e.time) + ' IST';
-    return 'EXECUTOR · CLOSED ' + M.shortSym(e.symbol) + ' ' + M.money(e.value, cur, { signed: true }) + ' · ' + evTime(e.time) + ' IST';
+    if (!e) return 'Scanning for setups';
+    if (e.kind === 'ENTRY') return 'Last entry: ' + M.shortSym(e.symbol) + ' · ' + evTime(e.time) + ' IST';
+    return 'Last close: ' + M.shortSym(e.symbol) + ' ' + M.money(e.value, cur, { signed: true }) + ' · ' + evTime(e.time) + ' IST';
   }
 
   // ---------- strategies ----------
+  function isRunning(b) { return !b.state || b.state === 'running'; }
+  function isCurrent(b) { return isRunning(b) || !!b.open_position; }     // a paused book stays here until its trade closes
   function bookLine(b) {
     var p = b.open_position;
-    if (b.state === 'paused') return p ? 'paused · last trade open: ' + M.shortSym(p.symbol) + ' ' + (p.side || '') : 'paused · no new trades';
-    if (p) return 'in trade: ' + M.shortSym(p.symbol) + ' ' + (p.side || '');
+    if (b.state === 'paused') return p ? 'Paused · closing ' + M.shortSym(p.symbol) + ' ' + (p.side || '') : 'Paused · no new trades';
+    if (p) return 'In trade: ' + M.shortSym(p.symbol) + ' ' + (p.side || '');
     var w = b.watch || [];
-    if (!w.length) return 'nothing armed · scanning';
-    if (w[0].distance_pct !== undefined) return 'next: ' + M.shortSym(w[0].symbol) + ' · ' + M.watchNote(w[0]).replace('POC ', '');
-    if (w[0].detail !== undefined && w[0].rsi_2h === undefined) return 'watching ' + b.watch_count + ' ranges';
-    return 'armed: ' + w.slice(0, 2).map(function (x) {
+    if (!w.length) return 'Nothing armed · scanning';
+    if (w[0].distance_pct !== undefined) return 'Next: ' + M.shortSym(w[0].symbol) + ' · ' + M.watchNote(w[0]).replace('POC ', '');
+    if (w[0].detail !== undefined && w[0].rsi_2h === undefined) return 'Watching ' + b.watch_count + ' ranges';
+    return 'Armed: ' + w.slice(0, 2).map(function (x) {
       var r = typeof x.rsi_1h === 'number' ? x.rsi_1h : x.rsi_2h;
       return M.shortSym(x.symbol) + ' ' + (typeof r === 'number' ? r.toFixed(1) : '');
     }).join(' · ');
   }
   var bookEls = {};
   function renderBooks(books) {
-    var box = q('books');
+    var box = q('books'), keep = {};
+    books.forEach(function (b) { keep[b.name] = 1; });
+    Object.keys(bookEls).forEach(function (n) { if (!keep[n]) { bookEls[n].remove(); delete bookEls[n]; } });
     books.forEach(function (b, i) {
       var el = bookEls[b.name];
       if (!el) {
@@ -92,18 +98,62 @@
       var live = !!b.open_position, paused = b.state === 'paused';
       el.classList.toggle('active', live);
       el.classList.toggle('paused', paused && !live);
-      el.querySelector('.st').textContent = live ? 'LIVE' : paused ? 'PAUSED' : (b.watch_count ? 'ARMED' : 'SCAN');
+      el.querySelector('.st').textContent = live ? 'In trade' : paused ? 'Paused' : (b.watch_count ? 'Armed' : 'Scanning');
       el.querySelector('.line').textContent = bookLine(b);
       var pnl = b.balance !== null && b.start_balance !== null ? b.balance - b.start_balance : null;
       el.querySelector('.bal').textContent = M.money(b.balance, cur, { compact: true }) + ' (' + M.money(pnl, cur, { signed: true, compact: true }) +
-        ') · ' + b.trades + ' trades · ' + b.wins + 'W/' + b.losses + 'L' + (paused ? '' : ' · watching ' + b.watch_count);
+        ') · ' + b.trades + ' trades · ' + b.wins + 'W / ' + b.losses + 'L' + (paused ? '' : ' · watching ' + b.watch_count);
     });
+  }
+
+  // ---------- past strategies (paused / retired) ----------
+  function lastTradeTime(b) {
+    var eq = b.equity || [];
+    return eq.length > 1 ? eq[eq.length - 1].time : null;
+  }
+  function renderPast(d) {
+    var past = (d.books || []).filter(function (b) { return !isCurrent(b); });
+    var sec = q('past');
+    sec.hidden = !past.length;
+    if (!past.length) return;
+    var pt = d.past_totals || past.reduce(function (a, b) {
+      a.balance += b.balance || 0; a.start_balance += b.start_balance || 0;
+      a.trades += b.trades; a.wins += b.wins; a.losses += b.losses; return a;
+    }, { balance: 0, start_balance: 0, trades: 0, wins: 0, losses: 0 });
+    var pnl = pt.balance - pt.start_balance;
+    var sum = q('pastsum');
+    sum.textContent = '';
+    sum.appendChild(h('span', { text: past.length + (past.length === 1 ? ' strategy · ' : ' strategies · ') + pt.trades + ' trades · ' +
+      pt.wins + 'W / ' + pt.losses + 'L · P&L ' }));
+    sum.appendChild(h('b', { class: pnl >= 0 ? 'accent' : 'red', text: M.money(pnl, cur, { signed: true }) }));
+    var body = q('pastrows'), rows = [];
+    past.forEach(function (b) {
+      var p = b.balance !== null && b.start_balance !== null ? b.balance - b.start_balance : null;
+      var wr = b.trades ? Math.round(b.wins / b.trades * 100) + '%' : '—';
+      var last = lastTradeTime(b);
+      var ran = (b.since ? M.dayMonth(b.since) : '—') + ' – ' + (last ? M.dayMonth(last) : b.trades ? '—' : 'no trades');
+      rows.push(h('tr', null,
+        h('th', { scope: 'row' }, h('span', { class: 'pn', text: b.name }), h('span', { class: 'pd', text: DESC[b.name] || '' })),
+        h('td', { 'data-label': 'Status' }, h('span', { class: 'pill ' + (b.state || 'retired'), text: b.state === 'paused' ? 'Paused' : 'Retired' })),
+        h('td', { class: 'num', 'data-label': 'Active', text: ran }),
+        h('td', { class: 'num', 'data-label': 'Trades', text: String(b.trades) }),
+        h('td', { class: 'num', 'data-label': 'Won / lost' }, h('span', { class: 'accent', text: String(b.wins) }), ' / ', h('span', { class: 'red', text: String(b.losses) })),
+        h('td', { class: 'num', 'data-label': 'Win rate', text: wr }),
+        h('td', { class: 'num ' + (p === null ? '' : p >= 0 ? 'accent' : 'red'), 'data-label': 'P&L', text: M.money(p, cur, { signed: true }) }),
+        h('td', { class: 'num', 'data-label': 'Final balance', text: M.money(b.balance, cur) })));
+    });
+    var keys = rows.map(function (r) { return r.textContent; }).join('|');
+    if (body.getAttribute('data-keys') !== keys) {
+      body.textContent = '';
+      body.setAttribute('data-keys', keys);
+      rows.forEach(function (r) { body.appendChild(r); });
+    }
   }
 
   // ---------- watch tiles ----------
   var PIPS = ['var(--warn)', 'var(--accent)', 'var(--blue)', 'var(--violet)', 'var(--red)'];
   function renderWatch(books) {
-    q('watching').textContent = 'watching ' + M.sumWatch(books);
+    q('watching').textContent = 'Watching ' + M.sumWatch(books);
     var box = q('watch'), top = M.topWatch(books, WATCH_SHOW);
     var keys = top.map(function (t) { return t.w.symbol + t.w.side; }).join(',');
     if (box.getAttribute('data-keys') === keys) {
@@ -153,7 +203,7 @@
   function renderTrades(books, events) {
     var open = books.filter(function (b) { return b.open_position; });
     var badge = q('openbadge');
-    badge.textContent = open.length ? (open.length === 1 ? 'OPEN' : open.length + ' OPEN') : 'FLAT';
+    badge.textContent = open.length ? open.length + ' open' : 'Flat';
     badge.classList.toggle('flat', !open.length);
     var box = q('trades-open');
     var keys = open.map(function (b) { return b.name + b.open_position.symbol; }).join(',');
@@ -165,12 +215,12 @@
         box.appendChild(h('div', { class: 'trade', 'data-book': b.name },
           h('div', { class: 'head' }, h('span', { class: 'sym' }), h('span', { class: 'side' }), h('span', { class: 'pnl' })),
           h('dl', null,
-            h('dt', { text: 'book' }), h('dd', { 'data-x': 'book' }),
-            h('dt', { text: 'entry' }), h('dd', { 'data-x': 'entry' }),
-            h('dt', { text: 'now' }), h('dd', { 'data-x': 'now' }),
-            h('dt', { text: 'stop' }), h('dd', { 'data-x': 'stop' }),
-            h('dt', { text: 'size' }), h('dd', { 'data-x': 'size' })),
-          h('p', { class: 'why' }, h('b', { text: 'reason:' }), ' ', h('span', { 'data-x': 'why' }))));
+            h('dt', { text: 'Strategy' }), h('dd', { 'data-x': 'book' }),
+            h('dt', { text: 'Entry' }), h('dd', { 'data-x': 'entry' }),
+            h('dt', { text: 'Now' }), h('dd', { 'data-x': 'now' }),
+            h('dt', { text: 'Stop' }), h('dd', { 'data-x': 'stop' }),
+            h('dt', { text: 'Size' }), h('dd', { 'data-x': 'size' })),
+          h('p', { class: 'why' }, h('b', { text: 'Reason' }), ' ', h('span', { 'data-x': 'why' }))));
       });
     }
     open.forEach(function (b) {
@@ -236,7 +286,7 @@
     M.tick(nowEl, now, function (v) { return M.money(v, cur, { compact: true }); });
     nowEl.className = now >= t.start_balance ? 'accent' : 'red';
     var since = (d.equity_total || [])[0];
-    q('since').textContent = since && since.time ? 'since ' + M.dayMonth(since.time) : '';
+    q('since').textContent = since && since.time ? 'Since ' + M.dayMonth(since.time) : '';
     if (!c) return;
     var line = q('line'), area = q('area'), base = q('base');
     var down = c.end < c.first;
@@ -253,7 +303,8 @@
 
   // ---------- main ----------
   function render(d) {
-    var books = d.books || [], events = d.events || [], t = d.totals;
+    var all = d.books || [], events = d.events || [], t = d.totals;
+    var books = all.filter(isCurrent);
     var running = d.status === 'active';
     var label = !running ? 'bot ' + d.status : BOT === 'nse' ? (M.nseMarketOpen() ? 'running · market open' : 'running · market closed') : 'running';
     runLine(running, label);
@@ -262,20 +313,21 @@
     M.tick(q('trades'), t.trades, function (v) { return String(Math.round(v)); });
     M.tick(q('wins'), t.wins, function (v) { return String(Math.round(v)); });
     M.tick(q('losses'), t.losses, function (v) { return String(Math.round(v)); });
-    var nPaused = books.filter(function (b) { return b.state === 'paused'; }).length;
-    q('online').textContent = running ? (books.length - nPaused) + ' online' + (nPaused ? ' · ' + nPaused + ' paused' : '') : books.length + ' stopped';
+    var nRun = books.filter(isRunning).length;
+    q('online').textContent = running ? nRun + ' running' : books.length + ' stopped';
     renderBooks(books);
-    renderWatch(books);
+    renderWatch(books.filter(isRunning));
     var skipped = events.filter(function (e) { return e.kind === 'SKIP' || e.kind === 'RSI1H_SKIP'; }).length;
     M.tick(q('skipped'), skipped, function (v) { return String(Math.round(v)); });
     var last = events.filter(function (e) { return e.kind === 'EXIT'; })[0];
     var lc = q('lastclose');
     lc.textContent = last ? M.money(last.value, cur, { signed: true }) : '—';
     lc.className = 'v ' + (last ? (last.value >= 0 ? 'accent' : 'red') : '');
-    q('lastclosenote').textContent = last ? (last.reason || '').toLowerCase() + ' · ' + M.shortSym(last.symbol) + ' · ' + (last.book || '') : 'no closed trade in the log';
-    renderTrades(books, events);
+    q('lastclosenote').textContent = last ? (last.reason || '').toLowerCase().replace(/_/g, ' ') + ' · ' + M.shortSym(last.symbol) + ' · ' + (last.book || '') : 'No closed trade in the log';
+    renderTrades(all, events);
     renderLog(events);
     renderEquity(d);
+    renderPast(d);
     state.first = false;
   }
   function failed() {
