@@ -4,27 +4,25 @@
   var M = window.Mintoro, h = M.h;
   var BOT = document.body.getAttribute('data-bot');
   var POLL_MS = 5000, LOG_SHOW = 8, WATCH_SHOW = 5;
-  var DESC = {
-    'BOOK JUMP': 'Order-book wall jumps (retired 23 Nov)',
-    'BJ ABSORB': 'Order-book wall absorption (retired 23 Nov)',
-    'POC RETURN': 'US-session volume POC, limit entry when price returns',
-    '1H RSI LONG': '1H RSI < 30, bullish divergence on 15m',
-    '1H RSI SHORT': '1H RSI > 70, bearish divergence on 5m',
-    '2H RSI SHORT': '2H RSI > 70, bearish divergence on 5m',
-    '2H RSI LONG': '2H RSI < 30, bullish divergence on 15m',
-    '1H BREAKOUT': '1H range ≤ 1%, break up at minute 12',
-    '1H BREAKDOWN': '1H range ≤ 1%, break down at minute 12'
+  var DESC = {      // deliberately general: the strategy logic is not published
+    'BOOK JUMP': 'Order-flow strategy (retired 23 Nov)',
+    'BJ ABSORB': 'Order-flow strategy (retired 23 Nov)',
+    'POC RETURN': 'Mean-reversion to key price levels',
+    '1H RSI LONG': 'Momentum-exhaustion longs',
+    '1H RSI SHORT': 'Momentum-exhaustion shorts',
+    '2H RSI SHORT': 'Momentum-exhaustion shorts',
+    '2H RSI LONG': 'Momentum-exhaustion longs',
+    '1H BREAKOUT': 'Range breakouts, long side',
+    '1H BREAKDOWN': 'Range breakdowns, short side'
   };
   var ICON = { 'POC RETURN': 'POC', '1H RSI LONG': 'RL', '1H RSI SHORT': 'RS', '2H RSI SHORT': '2S', '2H RSI LONG': '2L', '1H BREAKOUT': 'BO', '1H BREAKDOWN': 'BD' };
   var KIND = { ENTRY: 'ENTER', RSI1H_SIGNAL: 'SIGNAL', RSI1H_SKIP: 'SKIP', RSI1H_SCAN: 'SCAN', POC_ORDER: 'ORDER', POC_FILLED: 'FILL',
     POC_MISSED: 'MISS', POC_ORDER_CANCELLED: 'CANCEL', RSI1H_STOP_WIDENED: 'STOP', BREAKEVEN: 'BE', POC_BUILT: 'POC', STARTED: 'START' };
-  // which flow stage an event belongs to (SCAN ARM TRIGGER SIZE EXEC LOG)
-  var STAGE = { RSI1H_SCAN: 0, POC_BUILT: 0, STARTED: 0, RSI1H_SIGNAL: 2, RSI1H_SKIP: 2, SKIP: 2, RSI1H_STOP_WIDENED: 3,
-    POC_ORDER: 3, POC_FILLED: 4, ENTRY: 4, BREAKEVEN: 5, POC_MISSED: 1, POC_ORDER_CANCELLED: 5, EXIT: 5 };
 
   function q(f) { return document.querySelector('[data-f="' + f + '"]'); }
   var cur = BOT === 'nse' ? 'INR' : 'USD';
-  var state = { seen: {}, seenCount: 0, first: true, stage: 0, hot: 0, lastLine: null };
+  var state = { seen: {}, seenCount: 0, first: true, hot: 0, lastLine: null };
+  var orb = null;
 
   function evKey(e) { return [e.time, e.kind, e.symbol, e.value, e.book].join('|'); }
   function kindClass(e) {
@@ -38,8 +36,6 @@
     if (e.value === null || e.value === undefined) return e.side || '';
     if (e.kind === 'EXIT') return M.money(e.value, cur, { signed: true });
     if (e.kind === 'RSI1H_SCAN') return e.value + ' coins';
-    if (e.kind === 'RSI1H_SIGNAL') return 'RSI gap ' + e.value;
-    if (e.kind === 'RSI1H_SKIP') return 'RSI ' + e.value;
     return M.price(e.value);
   }
   function evTime(t) {
@@ -180,26 +176,34 @@
     state.hot++;
   }
 
-  // ---------- flow stages ----------
-  function showStage(n) {
-    state.stage = n;
-    document.querySelectorAll('.stage').forEach(function (s, i) {
-      s.classList.toggle('on', i === n);
-      s.classList.toggle('done', i < n);
-    });
+  // ---------- scanning orb ----------
+  function scanUniverse(books, events) {
+    var scan = events.filter(function (e) { return e.kind === 'RSI1H_SCAN' && e.value; })[0];
+    if (scan) return Math.round(scan.value);
+    return books.reduce(function (m, b) { return Math.max(m, b.watch_count || 0); }, 0);
   }
-  function stepStages() { showStage((state.stage + 1) % 6); }
+  function renderOrb(d, books, events) {
+    if (!orb) return;
+    var botUp = d.status === 'active', marketOpen = BOT !== 'nse' || M.nseMarketOpen();
+    var scanning = botUp && marketOpen;
+    var syms = [], seen = {}, hot = [];
+    function add(list, s) { s = M.shortSym(s || ''); if (s && !seen[list === hot ? 'h' + s : s]) { seen[list === hot ? 'h' + s : s] = 1; list.push(s); } }
+    books.forEach(function (b) {
+      (b.watch || []).forEach(function (w) { add(syms, w.symbol); });
+      if (b.open_position) add(hot, b.open_position.symbol);
+    });
+    M.topWatch(books, WATCH_SHOW).forEach(function (t) { add(hot, t.w.symbol); });
+    events.forEach(function (e) { add(syms, e.symbol); });
+    orb.update({ running: scanning, symbols: syms, hot: hot });
+    var n = scanUniverse(books, events);
+    q('orbdot').className = 'dot' + (scanning ? '' : ' off');
+    q('orbtext').textContent = scanning
+      ? 'Scanning ' + (n ? n + ' instruments' : 'the market') + ' for opportunities'
+      : !botUp ? 'Resting · bot ' + d.status
+      : 'Resting · NSE market closed · opens 09:15 IST (Mon–Fri)';
+  }
 
   // ---------- open trades ----------
-  function reasonFor(sym, events) {
-    var pick = null;
-    events.forEach(function (e) {
-      if (e.symbol !== sym) return;
-      if (e.kind === 'RSI1H_SIGNAL' && (!pick || pick.kind !== 'RSI1H_SIGNAL')) pick = e;
-      else if (!pick && (e.kind === 'ENTRY' || e.kind === 'POC_FILLED' || e.kind === 'POC_ORDER')) pick = e;
-    });
-    return pick ? pick.reason : null;
-  }
   function renderTrades(books, events) {
     var open = books.filter(function (b) { return b.open_position; });
     var badge = q('openbadge');
@@ -219,8 +223,7 @@
             h('dt', { text: 'Entry' }), h('dd', { 'data-x': 'entry' }),
             h('dt', { text: 'Now' }), h('dd', { 'data-x': 'now' }),
             h('dt', { text: 'Stop' }), h('dd', { 'data-x': 'stop' }),
-            h('dt', { text: 'Size' }), h('dd', { 'data-x': 'size' })),
-          h('p', { class: 'why' }, h('b', { text: 'Reason' }), ' ', h('span', { 'data-x': 'why' }))));
+            h('dt', { text: 'Size' }), h('dd', { 'data-x': 'size' }))));
       });
     }
     open.forEach(function (b) {
@@ -243,7 +246,6 @@
       el.querySelector('[data-x="stop"]').textContent = M.price(p.stop) +
         (p.entry && p.stop ? ' (' + (Math.abs(p.stop / p.entry - 1) * 100).toFixed(2) + '%)' : '');
       el.querySelector('[data-x="size"]').textContent = M.price(p.size) + (BOT === 'nse' ? ' qty' : ' units');
-      el.querySelector('[data-x="why"]').textContent = reasonFor(p.symbol, events) || b.name;
     });
   }
 
@@ -268,13 +270,12 @@
             h('span', { class: cls, text: KIND[e.kind] || e.kind }), ' ',
             h('span', { text: M.shortSym(e.symbol || '') }), ' ',
             h('span', { class: cls, text: evValue(e) })),
-          h('div', { class: 'why', text: (e.book ? e.book + ' · ' : '') + (e.reason || '') })));
+          h('div', { class: 'why', text: [e.book, e.kind === 'EXIT' ? e.reason : null].filter(Boolean).join(' · ') })));
       });
       Array.prototype.forEach.call(box.querySelectorAll('.new'), function (n) { setTimeout(function () { n.classList.remove('new'); }, 600); });
     }
     q('loglines').textContent = state.seenCount + ' lines';
     M.tick(q('lineno'), state.seenCount, function (v) { return 'line #' + Math.round(v); });
-    if (newest && STAGE[newest.kind] !== undefined) showStage(STAGE[newest.kind]);
   }
 
   // ---------- equity ----------
@@ -317,13 +318,14 @@
     q('online').textContent = running ? nRun + ' running' : books.length + ' stopped';
     renderBooks(books);
     renderWatch(books.filter(isRunning));
+    renderOrb(d, books.filter(isRunning), events);
     var skipped = events.filter(function (e) { return e.kind === 'SKIP' || e.kind === 'RSI1H_SKIP'; }).length;
     M.tick(q('skipped'), skipped, function (v) { return String(Math.round(v)); });
     var last = events.filter(function (e) { return e.kind === 'EXIT'; })[0];
     var lc = q('lastclose');
     lc.textContent = last ? M.money(last.value, cur, { signed: true }) : '—';
     lc.className = 'v ' + (last ? (last.value >= 0 ? 'accent' : 'red') : '');
-    q('lastclosenote').textContent = last ? (last.reason || '').toLowerCase().replace(/_/g, ' ') + ' · ' + M.shortSym(last.symbol) + ' · ' + (last.book || '') : 'No closed trade in the log';
+    q('lastclosenote').textContent = last ? (last.reason ? last.reason + ' · ' : '') + M.shortSym(last.symbol) + ' · ' + (last.book || '') : 'No closed trade in the log';
     renderTrades(all, events);
     renderLog(events);
     renderEquity(d);
@@ -332,14 +334,14 @@
   }
   function failed() {
     runLine(false, 'Reconnecting…');
+    if (orb) orb.update({ running: false, symbols: [], hot: [] });
+    q('orbdot').className = 'dot off';
+    q('orbtext').textContent = 'Reconnecting…';
   }
 
   document.addEventListener('DOMContentLoaded', function () {
-    showStage(0);
+    if (window.MintoroOrb && q('orb')) orb = window.MintoroOrb(q('orb'));
     M.poll(BOT, POLL_MS, render, failed);
-    if (!M.reduced()) {
-      setInterval(stepStages, 1400);
-      setInterval(cycleHot, 1500);
-    }
+    if (!M.reduced()) setInterval(cycleHot, 1500);
   });
 })();

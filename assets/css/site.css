@@ -226,18 +226,11 @@ button { font: inherit; color: inherit; }
 .watch .pip { width: 8px; height: 8px; border-radius: 50%; flex: none; }
 .watch .nt { font-size: 12px; color: var(--muted); margin-top: 4px; }
 .watch-empty { margin: 16px 0 0; font-size: 13px; color: var(--muted); }
-.flow { display: flex; align-items: center; margin-top: 26px; flex-wrap: wrap; row-gap: 14px; }
-.stage { display: flex; align-items: center; flex: 1 1 110px; min-width: 0; }
-.stage .node { flex: none; display: flex; flex-direction: column; align-items: center; gap: 8px; width: 84px; }
-.stage .circle { width: 54px; height: 54px; border-radius: 50%; border: 2px solid var(--line); display: flex; align-items: center;
   justify-content: center; color: var(--muted); font-weight: 700; font-size: 12px; transition: all .3s; }
-.stage .lbl { font-size: 12px; font-weight: 500; color: var(--muted); transition: color .3s; }
-.stage.done .circle, .stage.done .lbl { color: var(--fg); border-color: var(--fg); }
-.stage.on .circle { border-style: solid; border-color: var(--accent-text); color: var(--accent-text); background: var(--accent-soft); }
-.stage.on .lbl { color: var(--accent-text); }
-.stage .link { height: 2px; flex: 1 1 20px; min-width: 14px; margin-bottom: 22px;
-  background-image: repeating-linear-gradient(90deg, var(--dash) 0 8px, transparent 8px 14px); background-size: 28px 2px; }
-.stage.done .link { background-image: repeating-linear-gradient(90deg, var(--accent) 0 8px, transparent 8px 14px); animation: bd-move .9s linear infinite; }
+.orb-wrap { position: relative; margin-top: 8px; }
+.orb { display: block; width: 100%; height: clamp(240px, 30vw, 330px); }
+.orb-cap { margin: 0; text-align: center; font-size: 14px; font-weight: 500; color: var(--muted); }
+.orb-cap .dot { margin-right: 8px; }
 .stat4 { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-top: 20px; }
 .stat4 > div { border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; min-width: 0; }
 .stat4 .k { font-size: 12px; font-weight: 600; }

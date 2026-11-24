@@ -8,13 +8,14 @@
 <meta name="theme-color" content="#F5F6F2" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0B0E12" media="(prefers-color-scheme: dark)">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
-<script src="/assets/js/theme-init.js?v=20261125"></script>
+<script src="/assets/js/theme-init.js?v=20261126"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=JetBrains+Mono:wght@400;500;600;700&amp;family=Space+Grotesk:wght@500;600;700&amp;display=swap">
-<link rel="stylesheet" href="/assets/css/site.css?v=20261125">
-<script src="/assets/js/site.js?v=20261125" defer></script>
-<script src="/assets/js/dashboard.js?v=20261125" defer></script>
+<link rel="stylesheet" href="/assets/css/site.css?v=20261126">
+<script src="/assets/js/site.js?v=20261126" defer></script>
+<script src="/assets/js/orb.js?v=20261126" defer></script>
+<script src="/assets/js/dashboard.js?v=20261126" defer></script>
 </head>
 <body class="dash" data-bot="crypto">
 <a class="skip" href="#main">Skip to content</a>
@@ -54,13 +55,16 @@
 
     <div class="dash-right">
       <section class="panel" aria-label="Live flow">
-        <div class="label-row"><span>Live flow · scan → arm → trigger → size → execute → log</span><span data-f="watching">Watching —</span></div>
+        <div class="label-row"><span>Live scan</span><span data-f="watching">Watching —</span></div>
+        <div class="orb-wrap">
+          <canvas class="orb" data-f="orb" aria-hidden="true"></canvas>
+          <p class="orb-cap" data-f="orbcap" aria-live="polite"><span class="dot off" data-f="orbdot"></span><span data-f="orbtext">Connecting…</span></p>
+        </div>
         <div class="watch-grid" data-f="watch"></div>
-        <div class="flow" aria-hidden="true"><div class="stage" data-stage="0"><div class="node"><div class="circle">01</div><span class="lbl">Scan</span></div><div class="link" aria-hidden="true"></div></div><div class="stage" data-stage="1"><div class="node"><div class="circle">02</div><span class="lbl">Arm</span></div><div class="link" aria-hidden="true"></div></div><div class="stage" data-stage="2"><div class="node"><div class="circle">03</div><span class="lbl">Trigger</span></div><div class="link" aria-hidden="true"></div></div><div class="stage" data-stage="3"><div class="node"><div class="circle">04</div><span class="lbl">Size</span></div><div class="link" aria-hidden="true"></div></div><div class="stage" data-stage="4"><div class="node"><div class="circle">05</div><span class="lbl">Execute</span></div><div class="link" aria-hidden="true"></div></div><div class="stage" data-stage="5"><div class="node"><div class="circle">06</div><span class="lbl">Log</span></div></div></div>
         <div class="stat4">
           <div><div class="k red">Skipped</div><div class="v" data-f="skipped">—</div><div class="s">in the last 40 log lines</div></div>
           <div><div class="k violet">Risk per trade</div><div class="v">5%</div><div class="s">of the book · 20x max</div></div>
-          <div><div class="k warn">Logger</div><div class="v" data-f="lineno">—</div><div class="s">each with a reason</div></div>
+          <div><div class="k warn">Logger</div><div class="v" data-f="lineno">—</div><div class="s">events logged</div></div>
           <div><div class="k blue">Last close</div><div class="v" data-f="lastclose">—</div><div class="s" data-f="lastclosenote">&nbsp;</div></div>
         </div>
       </section>
