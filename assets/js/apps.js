@@ -5,6 +5,7 @@
   function q(scope, f) { return scope.querySelector('[data-f="' + f + '"]'); }
 
   function bookState(b) {
+    if (b.state === 'paused') return b.open_position ? 'paused · ' + M.shortSym(b.open_position.symbol) + ' open' : 'paused';
     if (b.open_position) return 'in trade · ' + M.shortSym(b.open_position.symbol) + ' ' + (b.open_position.side || '');
     if (b.name === 'POC RETURN' || b.name.indexOf('BREAK') !== -1) return b.watch_count ? 'watching ' + b.watch_count : 'scanning';
     return b.watch_count ? b.watch_count + ' armed' : 'scanning';
@@ -27,7 +28,7 @@
     q(card, 'open').textContent = String(d.totals.open_positions);
     (d.books || []).forEach(function (b) {
       var row = card.querySelector('[data-book="' + b.name + '"] [data-f="state"]');
-      if (row) row.textContent = bookState(b);
+      if (row) { row.textContent = bookState(b); row.classList.toggle('muted', b.state === 'paused'); }
     });
   }
   function failed(bot) {

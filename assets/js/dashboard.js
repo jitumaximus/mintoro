@@ -62,6 +62,7 @@
   // ---------- strategies ----------
   function bookLine(b) {
     var p = b.open_position;
+    if (b.state === 'paused') return p ? 'paused · last trade open: ' + M.shortSym(p.symbol) + ' ' + (p.side || '') : 'paused · no new trades';
     if (p) return 'in trade: ' + M.shortSym(p.symbol) + ' ' + (p.side || '');
     var w = b.watch || [];
     if (!w.length) return 'nothing armed · scanning';
@@ -88,13 +89,14 @@
         bookEls[b.name] = el;
         box.appendChild(el);
       }
-      var live = !!b.open_position;
+      var live = !!b.open_position, paused = b.state === 'paused';
       el.classList.toggle('active', live);
-      el.querySelector('.st').textContent = live ? 'LIVE' : (b.watch_count ? 'ARMED' : 'SCAN');
+      el.classList.toggle('paused', paused && !live);
+      el.querySelector('.st').textContent = live ? 'LIVE' : paused ? 'PAUSED' : (b.watch_count ? 'ARMED' : 'SCAN');
       el.querySelector('.line').textContent = bookLine(b);
       var pnl = b.balance !== null && b.start_balance !== null ? b.balance - b.start_balance : null;
       el.querySelector('.bal').textContent = M.money(b.balance, cur, { compact: true }) + ' (' + M.money(pnl, cur, { signed: true, compact: true }) +
-        ') · ' + b.trades + ' trades · ' + b.wins + 'W/' + b.losses + 'L · watching ' + b.watch_count;
+        ') · ' + b.trades + ' trades · ' + b.wins + 'W/' + b.losses + 'L' + (paused ? '' : ' · watching ' + b.watch_count);
     });
   }
 
@@ -260,7 +262,8 @@
     M.tick(q('trades'), t.trades, function (v) { return String(Math.round(v)); });
     M.tick(q('wins'), t.wins, function (v) { return String(Math.round(v)); });
     M.tick(q('losses'), t.losses, function (v) { return String(Math.round(v)); });
-    q('online').textContent = books.length + (running ? ' online' : ' stopped');
+    var nPaused = books.filter(function (b) { return b.state === 'paused'; }).length;
+    q('online').textContent = running ? (books.length - nPaused) + ' online' + (nPaused ? ' · ' + nPaused + ' paused' : '') : books.length + ' stopped';
     renderBooks(books);
     renderWatch(books);
     var skipped = events.filter(function (e) { return e.kind === 'SKIP' || e.kind === 'RSI1H_SKIP'; }).length;
