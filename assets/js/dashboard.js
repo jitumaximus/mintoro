@@ -102,6 +102,67 @@
     });
   }
 
+  // ---------- balance by strategy ----------
+  // The running strategies' balances add up to the headline balance; colours match the strategy icons.
+  function splitBar(box, items, key, total) {
+    var sig = items.map(function (it) { return it.b.name + ':' + (it.b[key] || 0).toFixed(2); }).join('|');
+    if (box.getAttribute('data-keys') === sig) return;
+    var fresh = box.getAttribute('data-keys') === null || box.children.length !== items.length;
+    box.setAttribute('data-keys', sig);
+    if (fresh) {
+      box.textContent = '';
+      items.forEach(function (it) { box.appendChild(h('span', { class: 'sw-' + it.c })); });
+    }
+    items.forEach(function (it, i) {
+      var v = Math.max(0, it.b[key] || 0), pc = total ? v / total * 100 : 0, seg = box.children[i];
+      seg.style.flexGrow = String(Math.max(pc, 0.5));
+      seg.style.flexBasis = '0';
+      seg.textContent = pc >= 9 ? Math.round(pc) + '%' : '';
+      seg.title = it.b.name + ': ' + M.money(v, cur) + ' (' + pc.toFixed(1) + '%)';
+    });
+  }
+  function renderSplit(d, current) {
+    var sec = q('split');
+    var items = current.map(function (b, i) { return { b: b, c: i % 4 }; }).filter(function (it) { return isRunning(it.b); });
+    sec.hidden = items.length < 2;
+    if (sec.hidden) return;
+    var now = items.reduce(function (a, it) { return a + (it.b.balance || 0); }, 0);
+    var start = items.reduce(function (a, it) { return a + (it.b.start_balance || 0); }, 0);
+    q('splitsum').textContent = items.length + ' strategies · ' + M.money(now, cur, { compact: true }) + ' of ' + M.money(start, cur, { compact: true }) + ' start';
+    splitBar(q('splitstart'), items, 'start_balance', start);
+    splitBar(q('splitnow'), items, 'balance', now);
+    var box = q('splitrows');
+    var keys = items.map(function (it) { return it.b.name; }).join('|');
+    if (box.getAttribute('data-keys') !== keys) {
+      box.textContent = '';
+      box.setAttribute('data-keys', keys);
+      items.forEach(function (it) {
+        var sw = h('i', { class: 'sw-' + it.c });
+        box.appendChild(h('div', { class: 'split-card', 'data-k': it.b.name },
+          h('div', { class: 'nm' }, sw, h('span', { text: it.b.name }), h('span', { class: 'tag', hidden: true })),
+          h('div', { class: 'bal' }),
+          h('div', { class: 'chg' }),
+          h('p', { class: 'meta' })));
+      });
+    }
+    items.forEach(function (it, i) {
+      var b = it.b, el = box.children[i];
+      var pnl = (b.balance || 0) - (b.start_balance || 0), pc = b.start_balance ? pnl / b.start_balance * 100 : 0;
+      var share = now ? (b.balance || 0) / now * 100 : 0;
+      var wr = b.trades ? Math.round(b.wins / b.trades * 100) + '% win rate' : 'no trades yet';
+      M.tick(el.querySelector('.bal'), b.balance || 0, function (v) { return M.money(v, cur); });
+      var chg = el.querySelector('.chg');
+      chg.textContent = M.money(pnl, cur, { signed: true }) + ' (' + M.pct(pc, true) + ')';
+      chg.className = 'chg ' + (pnl >= 0 ? 'accent' : 'red');
+      var p = b.open_position, tag = el.querySelector('.tag');
+      tag.hidden = !p;
+      if (p) tag.textContent = 'in trade';
+      var open = p && typeof p.unrealised_pnl === 'number' ? ' · open trade ' + M.money(p.unrealised_pnl, cur, { signed: true }) : '';
+      el.querySelector('.meta').textContent = 'Started ' + M.money(b.start_balance, cur, { compact: true }) + ' · now ' + share.toFixed(1) +
+        '% of balance\n' + b.trades + ' trades · ' + b.wins + 'W / ' + b.losses + 'L · ' + wr + open;
+    });
+  }
+
   // ---------- past strategies (paused / retired) ----------
   function lastTradeTime(b) {
     var eq = b.equity || [];
@@ -458,6 +519,7 @@
     var nRun = books.filter(isRunning).length;
     q('online').textContent = running ? nRun + ' running' : books.length + ' stopped';
     renderBooks(books);
+    renderSplit(d, books);
     renderWatch(books.filter(isRunning));
     renderOrb(d, books.filter(isRunning), events);
     var skipped = events.slice(0, 40).filter(function (e) { return e.kind === 'SKIP' || e.kind === 'RSI1H_SKIP'; }).length;
