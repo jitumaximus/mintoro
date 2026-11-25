@@ -329,7 +329,7 @@
       }
       el.querySelector('[data-x="book"]').textContent = b.name + ' · since ' + evTime(p.opened_at) + ' IST';
       el.querySelector('[data-x="entry"]').textContent = M.price(p.entry);
-      el.querySelector('[data-x="now"]').textContent = p.mark_price === null || p.mark_price === undefined ? '— (no live NSE price)' : M.price(p.mark_price);
+      el.querySelector('[data-x="now"]').textContent = p.mark_price === null || p.mark_price === undefined ? '— (waiting for the live price)' : M.price(p.mark_price);
       el.querySelector('[data-x="stop"]').textContent = M.price(p.stop) +
         (p.entry && p.stop ? ' (' + (Math.abs(p.stop / p.entry - 1) * 100).toFixed(2) + '%)' : '');
       el.querySelector('[data-x="size"]').textContent = M.price(p.size) + (BOT === 'nse' ? ' qty' : ' units');
