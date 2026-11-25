@@ -3,7 +3,7 @@
   'use strict';
   var M = window.Mintoro, h = M.h;
   var BOT = document.body.getAttribute('data-bot');
-  var POLL_MS = 5000, LOG_SHOW = 8, WATCH_SHOW = 5;
+  var POLL_MS = 5000, WATCH_SHOW = 5;
   var DESC = {      // deliberately general: the strategy logic is not published
     'BOOK JUMP': 'Order-flow strategy (retired 23 Nov)',
     'BJ ABSORB': 'Order-flow strategy (retired 23 Nov)',
@@ -250,45 +250,159 @@
   }
 
   // ---------- log ----------
+  // The API sends every line since the start of the newest line's day (at least 40). The box scrolls;
+  // it sticks to the newest line unless the reader has scrolled up, then a button offers a jump back down.
+  var logUnread = 0;
+  function logAtBottom(box) { return box.scrollHeight - box.scrollTop - box.clientHeight < 24; }
+  function logJump() {
+    var btn = q('logjump');
+    if (!btn) {
+      btn = h('button', { type: 'button', class: 'log-jump', 'data-f': 'logjump', hidden: true });
+      q('log').parentNode.insertBefore(btn, q('log').nextSibling);
+      btn.addEventListener('click', function () { var box = q('log'); box.scrollTop = box.scrollHeight; });
+      q('log').addEventListener('scroll', function () { if (logAtBottom(q('log'))) { logUnread = 0; btn.hidden = true; } }, { passive: true });
+    }
+    return btn;
+  }
+  function dayLabel(t) { return t.slice(0, 10) === M.todayIST() ? 'Today · ' + M.dayMonth(t) : M.dayMonth(t); }
   function renderLog(events) {
-    var newest = null;
+    var added = 0;
     events.forEach(function (e) {
       var k = evKey(e);
-      if (!state.seen[k]) { state.seen[k] = state.first ? 1 : 2; state.seenCount++; if (!state.first && !newest) newest = e; }
+      if (!state.seen[k]) { state.seen[k] = state.first ? 1 : 2; state.seenCount++; if (!state.first) added++; }
     });
-    var lines = events.slice(0, LOG_SHOW).reverse(); // oldest first, newest at the bottom
-    var box = q('log');
-    var keys = lines.map(evKey).join(',');
+    var lines = events.slice().reverse(); // oldest first, newest at the bottom
+    var box = q('log'), btn = logJump();
+    var keys = lines.length + ':' + (lines.length ? evKey(lines[0]) + ',' + evKey(lines[lines.length - 1]) : '');
     if (box.getAttribute('data-keys') !== keys) {
-      box.textContent = '';
-      box.setAttribute('data-keys', keys);
+      var stick = state.first || logAtBottom(box), top = box.scrollTop;
+      var frag = document.createDocumentFragment(), day = null;
       lines.forEach(function (e) {
+        var d = (e.time || '').slice(0, 10);
+        if (d && d !== day) { day = d; frag.appendChild(h('div', { class: 'log-day', text: dayLabel(e.time) })); }
         var cls = kindClass(e), fresh = state.seen[evKey(e)] === 2;
-        box.appendChild(h('div', { class: 'log-line' + (fresh ? ' new' : '') },
+        frag.appendChild(h('div', { class: 'log-line' + (fresh ? ' new' : '') },
           h('div', { class: 'meta' },
-            h('span', { class: 'muted', text: evTime(e.time) }), ' ',
+            h('span', { class: 'muted', text: e.time ? M.hhmm(e.time) : '--:--' }), ' ',
             h('span', { class: cls, text: KIND[e.kind] || e.kind }), ' ',
             h('span', { text: M.shortSym(e.symbol || '') }), ' ',
             h('span', { class: cls, text: evValue(e) })),
           h('div', { class: 'why', text: [e.book, e.kind === 'EXIT' ? e.reason : null].filter(Boolean).join(' · ') })));
+        if (fresh) state.seen[evKey(e)] = 1;
       });
+      box.textContent = '';
+      box.appendChild(frag);
+      box.setAttribute('data-keys', keys);
+      if (stick) { box.scrollTop = box.scrollHeight; logUnread = 0; }
+      else { box.scrollTop = top; logUnread += added; }
       Array.prototype.forEach.call(box.querySelectorAll('.new'), function (n) { setTimeout(function () { n.classList.remove('new'); }, 600); });
     }
-    q('loglines').textContent = state.seenCount + ' lines';
+    btn.hidden = !logUnread;
+    btn.textContent = '↓ ' + logUnread + ' new line' + (logUnread === 1 ? '' : 's');
+    var first = lines[0];
+    q('loglines').textContent = lines.length + ' lines' + (first && first.time ? ' · from ' + M.dayMonth(first.time) : '');
     M.tick(q('lineno'), state.seenCount, function (v) { return 'line #' + Math.round(v); });
   }
 
   // ---------- equity ----------
+  // Points are spaced by trade (each closed trade moves the curve), so the date ticks mark where each day starts.
+  var eq = { pts: [], c: null, i: -1, start: 0, hideT: 0, bound: false };
+  function eqTime(t) { return t ? M.dayMonth(t) + ', ' + M.hhmm(t) + ' IST' : ''; }
+  function eqShow(i) {
+    var n = eq.pts.length;
+    if (n < 2 || !eq.c) return;
+    i = Math.max(0, Math.min(n - 1, i));
+    eq.i = i;
+    var p = eq.pts[i], x = i / (n - 1) * 100, y = eq.c.y(p.v) / 180 * 100;
+    var pin = q('eqpin'), cross = q('eqcross'), tip = q('eqtip'), plot = q('eqplot');
+    pin.style.left = x + '%'; pin.style.top = y + '%'; pin.className = 'eq-pin' + (p.v < eq.start ? ' down' : '');
+    cross.style.left = x + '%';
+    var chg = p.v - eq.start, pc = eq.start ? chg / eq.start * 100 : 0;
+    tip.textContent = '';
+    tip.appendChild(h('b', { text: M.money(p.v, cur) }));
+    tip.appendChild(h('span', { class: 'chg ' + (chg >= 0 ? 'accent' : 'red'), text: M.money(chg, cur, { signed: true }) + ' (' + M.pct(pc, true) + ')' }));
+    tip.appendChild(h('span', { class: 't', text: ' · ' + (p.now ? 'now' : 'trade ' + i) }));
+    tip.appendChild(h('span', { class: 't blk', text: eqTime(p.t) }));
+    pin.hidden = cross.hidden = tip.hidden = false;
+    var W = plot.clientWidth, tw = tip.offsetWidth, px = x / 100 * W;
+    var left = px + 14 + tw > W ? px - 14 - tw : px + 14;           // beside the pin, flipped near the right edge
+    tip.style.left = Math.max(0, Math.min(W - tw, left)) + 'px';
+    tip.style.top = (y / 100 * 180 > 90 ? 0 : 90) + 'px';
+  }
+  function eqHide() { eq.i = -1; q('eqpin').hidden = q('eqcross').hidden = q('eqtip').hidden = true; }
+  function eqBind() {
+    if (eq.bound) return;
+    eq.bound = true;
+    var plot = q('eqplot');
+    function at(ev) {
+      var r = plot.getBoundingClientRect();
+      return Math.round(Math.max(0, Math.min(1, (ev.clientX - r.left) / r.width)) * (eq.pts.length - 1));
+    }
+    plot.addEventListener('pointerdown', function (ev) { clearTimeout(eq.hideT); eqShow(at(ev)); });
+    plot.addEventListener('pointermove', function (ev) {
+      if (ev.pointerType === 'mouse' || ev.buttons || ev.pressure) { clearTimeout(eq.hideT); eqShow(at(ev)); }
+    });
+    plot.addEventListener('pointerleave', function (ev) { if (ev.pointerType === 'mouse') eqHide(); });
+    ['pointerup', 'pointercancel'].forEach(function (k) {
+      plot.addEventListener(k, function (ev) {
+        if (ev.pointerType !== 'mouse') { clearTimeout(eq.hideT); eq.hideT = setTimeout(eqHide, 3000); }
+      });
+    });
+    plot.addEventListener('keydown', function (ev) {
+      var n = eq.pts.length, i = eq.i < 0 ? n - 1 : eq.i;
+      if (ev.key === 'ArrowLeft') i--; else if (ev.key === 'ArrowRight') i++;
+      else if (ev.key === 'Home') i = 0; else if (ev.key === 'End') i = n - 1;
+      else if (ev.key === 'Escape') { eqHide(); return; } else return;
+      ev.preventDefault(); eqShow(i);
+    });
+    plot.addEventListener('blur', eqHide);
+    window.addEventListener('resize', function () { if (eq.i >= 0) eqShow(eq.i); });
+  }
+  function eqAxis() {
+    var axis = q('eqaxis'), n = eq.pts.length;
+    axis.textContent = '';
+    if (n < 2) return;
+    var gap = (axis.clientWidth || 600) < 520 ? 22 : 11;       // minimum spacing between ticks, % of width
+    var marks = [], prev = null;
+    eq.pts.forEach(function (p, i) {
+      var d = (p.t || '').slice(0, 10);                        // the live 'now' point is not a trade day
+      if (d && d !== prev && !p.now) { marks.push({ i: i, t: p.t }); prev = d; }
+    });
+    var last = n - 1, kept = [];
+    marks.forEach(function (m) {
+      var x = m.i / last * 100;
+      if (kept.length && x - kept[kept.length - 1].x < gap) return;
+      kept.push({ x: x, t: m.t });
+    });
+    var newest = marks[marks.length - 1], nx = newest.i / last * 100;   // always show the latest day
+    if (kept[kept.length - 1].t !== newest.t) {
+      while (kept.length > 1 && nx - kept[kept.length - 1].x < gap) kept.pop();
+      if (kept.length === 1 && nx - kept[0].x < gap) kept = [];
+      kept.push({ x: nx, t: newest.t });
+    }
+    kept.forEach(function (k) {
+      var s = h('span', { class: k.x < gap / 2 ? 'first' : k.x > 100 - gap / 2 ? 'last' : '', text: M.dayMonth(k.t) });
+      s.style.left = k.x + '%';
+      axis.appendChild(s);
+    });
+  }
   function renderEquity(d) {
     var t = d.totals, now = t.balance + (t.unrealised_pnl || 0);
-    var c = M.curve((d.equity_total || []).map(function (p) { return p.balance; }).concat([now]), 1000, 180, 10);
+    eq.pts = (d.equity_total || []).filter(function (p) { return typeof p.balance === 'number' && !isNaN(p.balance); })
+      .map(function (p) { return { t: p.time, v: p.balance }; });
+    eq.pts.push({ t: d.generated_at, v: now, now: true });
+    eq.start = t.start_balance;
+    var c = M.curve(eq.pts.map(function (p) { return p.v; }), 1000, 180, 10);
+    eq.c = c;
     q('start').textContent = M.money(t.start_balance, cur, { compact: true });
     var nowEl = q('now');
     M.tick(nowEl, now, function (v) { return M.money(v, cur, { compact: true }); });
     nowEl.className = now >= t.start_balance ? 'accent' : 'red';
     var since = (d.equity_total || [])[0];
     q('since').textContent = since && since.time ? 'Since ' + M.dayMonth(since.time) : '';
-    if (!c) return;
+    eqBind();
+    eqAxis();
+    if (!c) { eqHide(); return; }
     var line = q('line'), area = q('area'), base = q('base');
     var down = c.end < c.first;
     if (line.getAttribute('points') !== c.line) {
@@ -300,6 +414,7 @@
     area.classList.toggle('down', down);
     var y = c.y(t.start_balance).toFixed(1);
     base.setAttribute('y1', y); base.setAttribute('y2', y);
+    if (eq.i >= 0) eqShow(Math.min(eq.i, eq.pts.length - 1));
   }
 
   // ---------- main ----------
@@ -319,7 +434,7 @@
     renderBooks(books);
     renderWatch(books.filter(isRunning));
     renderOrb(d, books.filter(isRunning), events);
-    var skipped = events.filter(function (e) { return e.kind === 'SKIP' || e.kind === 'RSI1H_SKIP'; }).length;
+    var skipped = events.slice(0, 40).filter(function (e) { return e.kind === 'SKIP' || e.kind === 'RSI1H_SKIP'; }).length;
     M.tick(q('skipped'), skipped, function (v) { return String(Math.round(v)); });
     var last = events.filter(function (e) { return e.kind === 'EXIT'; })[0];
     var lc = q('lastclose');
