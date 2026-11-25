@@ -3,7 +3,7 @@
   'use strict';
   var M = window.Mintoro, h = M.h;
   var BOT = document.body.getAttribute('data-bot');
-  var POLL_MS = 5000, WATCH_SHOW = 5;
+  var POLL_MS = 5000;
   var DESC = {      // deliberately general: the strategy logic is not published
     'BOOK JUMP': 'Order-flow strategy (retired 23 Nov)',
     'BJ ABSORB': 'Order-flow strategy (retired 23 Nov)',
@@ -147,13 +147,26 @@
   }
 
   // ---------- watch tiles ----------
-  var PIPS = ['var(--warn)', 'var(--accent)', 'var(--blue)', 'var(--violet)', 'var(--red)'];
+  // Every watched instrument gets its turn: the highlight walks across the tiles, then the next page comes in.
+  var PIPS = ['var(--warn)', 'var(--accent)', 'var(--blue)', 'var(--violet)', 'var(--red)', 'var(--accent)'];
+  var watchAll = [], watchPage = 0;
+  function pageSize() {     // one full row of tiles on wide screens, 3 rows (6 tiles) on phones
+    var cols = (getComputedStyle(q('watch')).gridTemplateColumns || '').split(' ').filter(Boolean).length || 2;
+    return cols >= 4 ? cols : cols * 3;
+  }
   function renderWatch(books) {
-    q('watching').textContent = 'Watching ' + M.sumWatch(books);
-    var box = q('watch'), top = M.topWatch(books, WATCH_SHOW);
+    watchAll = M.topWatch(books, 1000);
+    var pages = Math.max(1, Math.ceil(watchAll.length / pageSize()));
+    if (watchPage >= pages) watchPage = 0;
+    drawWatch();
+  }
+  function drawWatch() {
+    var ps = pageSize(), n = watchAll.length, from = Math.min(watchPage * ps, Math.max(0, n - 1)), top = watchAll.slice(from, from + ps);
+    q('watching').textContent = 'Watching ' + n + (n > ps ? ' · ' + (from + 1) + '–' + (from + top.length) : '');
+    var box = q('watch');
     var keys = top.map(function (t) { return t.w.symbol + t.w.side; }).join(',');
     if (box.getAttribute('data-keys') === keys) {
-      top.forEach(function (t, i) { var n = box.children[i] && box.children[i].querySelector('.nt'); if (n) n.textContent = M.watchNote(t.w); });
+      top.forEach(function (t, i) { var c = box.children[i] && box.children[i].querySelector('.nt'); if (c) c.textContent = M.watchNote(t.w); });
       return;
     }
     var old = {};
@@ -164,15 +177,21 @@
     top.forEach(function (t, i) {
       var k = t.w.symbol + t.w.side;
       var pip = h('span', { class: 'pip' });
-      pip.style.background = PIPS[i % PIPS.length];
+      pip.style.background = PIPS[(from + i) % PIPS.length];
       box.appendChild(h('div', { class: 'watch' + (old[k] || state.first ? '' : ' new'), 'data-k': k, title: t.book },
         h('div', { class: 'row' }, h('span', { class: 'sym', text: M.shortSym(t.w.symbol) }), pip),
         h('div', { class: 'nt', text: M.watchNote(t.w) })));
     });
   }
   function cycleHot() {
+    if (document.hidden) return;
     var tiles = q('watch').querySelectorAll('.watch');
-    tiles.forEach(function (t, i) { t.classList.toggle('hot', i === state.hot % Math.max(1, tiles.length)); });
+    if (state.hot >= tiles.length) {                 // walked past the last tile: next page
+      state.hot = 0;
+      var pages = Math.ceil(watchAll.length / pageSize());
+      if (pages > 1) { watchPage = (watchPage + 1) % pages; drawWatch(); tiles = q('watch').querySelectorAll('.watch'); }
+    }
+    tiles.forEach(function (t, i) { t.classList.toggle('hot', i === state.hot); });
     state.hot++;
   }
 
@@ -186,21 +205,28 @@
     if (!orb) return;
     var botUp = d.status === 'active', marketOpen = BOT !== 'nse' || M.nseMarketOpen();
     var scanning = botUp && marketOpen;
-    var syms = [], seen = {}, hot = [];
-    function add(list, s) { s = M.shortSym(s || ''); if (s && !seen[list === hot ? 'h' + s : s]) { seen[list === hot ? 'h' + s : s] = 1; list.push(s); } }
+    var sc = d.scan || {};
+    var syms = [], seen = {}, hot = [], hseen = {};
+    function add(s) { s = M.shortSym(s || ''); if (s && !seen[s]) { seen[s] = 1; syms.push(s); } }
+    function addHot(s) { s = M.shortSym(s || ''); if (s && !hseen[s]) { hseen[s] = 1; hot.push(s); } }
+    (sc.universe || []).forEach(add);
     books.forEach(function (b) {
-      (b.watch || []).forEach(function (w) { add(syms, w.symbol); });
-      if (b.open_position) add(hot, b.open_position.symbol);
+      (b.watch || []).forEach(function (w) { add(w.symbol); addHot(w.symbol); });
+      if (b.open_position) { add(b.open_position.symbol); addHot(b.open_position.symbol); }
     });
-    M.topWatch(books, WATCH_SHOW).forEach(function (t) { add(hot, t.w.symbol); });
-    events.forEach(function (e) { add(syms, e.symbol); });
-    orb.update({ running: scanning, symbols: syms, hot: hot });
-    var n = scanUniverse(books, events);
+    if (!(sc.universe || []).length) events.forEach(function (e) { add(e.symbol); });
+    var n = sc.count || (sc.universe || []).length || scanUniverse(books, events);
+    orb.update({ running: scanning, symbols: syms, hot: hot, count: n });
     q('orbdot').className = 'dot' + (scanning ? '' : ' off');
     q('orbtext').textContent = scanning
       ? 'Scanning ' + (n ? n + ' instruments' : 'the market') + ' for opportunities'
       : !botUp ? 'Resting · bot ' + d.status
       : 'Resting · NSE market closed · opens 09:15 IST (Mon–Fri)';
+    var w = watchAll.length, sub = [];
+    if (sc.last_full) sub.push((scanning ? 'Full scan hourly · last ' : 'Last full scan ') +
+      (sc.last_full.slice(0, 10) === M.todayIST() ? '' : M.dayMonth(sc.last_full) + ' ') + M.hhmm(sc.last_full) + ' IST');
+    if (scanning && w) sub.push(w + ' on watch');
+    q('orbsub').textContent = sub.join(' · ');
   }
 
   // ---------- open trades ----------
@@ -457,6 +483,6 @@
   document.addEventListener('DOMContentLoaded', function () {
     if (window.MintoroOrb && q('orb')) orb = window.MintoroOrb(q('orb'));
     M.poll(BOT, POLL_MS, render, failed);
-    if (!M.reduced()) setInterval(cycleHot, 1500);
+    setInterval(cycleHot, 1500);
   });
 })();
