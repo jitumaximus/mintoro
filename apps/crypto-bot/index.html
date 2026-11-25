@@ -8,14 +8,14 @@
 <meta name="theme-color" content="#F5F6F2" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0B0E12" media="(prefers-color-scheme: dark)">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
-<script src="/assets/js/theme-init.js?v=20261128"></script>
+<script src="/assets/js/theme-init.js?v=20261129"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=JetBrains+Mono:wght@400;500;600;700&amp;family=Space+Grotesk:wght@500;600;700&amp;display=swap">
-<link rel="stylesheet" href="/assets/css/site.css?v=20261128">
-<script src="/assets/js/site.js?v=20261128" defer></script>
-<script src="/assets/js/orb.js?v=20261128" defer></script>
-<script src="/assets/js/dashboard.js?v=20261128" defer></script>
+<link rel="stylesheet" href="/assets/css/site.css?v=20261129">
+<script src="/assets/js/site.js?v=20261129" defer></script>
+<script src="/assets/js/orb.js?v=20261129" defer></script>
+<script src="/assets/js/dashboard.js?v=20261129" defer></script>
 </head>
 <body class="dash" data-bot="crypto">
 <a class="skip" href="#main">Skip to content</a>
@@ -45,6 +45,15 @@
       <div><div class="n accent" data-f="wins">—</div><div class="l">Wins</div></div>
       <div><div class="n red" data-f="losses">—</div><div class="l">Losses</div></div>
     </div>
+  </section>
+
+  <section class="panel split" data-f="split" aria-label="Balance by strategy" hidden>
+    <div class="label-row"><span>Balance by strategy</span><span data-f="splitsum">—</span></div>
+    <div class="split-bars" aria-hidden="true">
+      <div class="split-row"><span class="split-l">Start</span><div class="split-bar" data-f="splitstart"></div></div>
+      <div class="split-row"><span class="split-l">Now</span><div class="split-bar" data-f="splitnow"></div></div>
+    </div>
+    <div class="split-grid" data-f="splitrows"></div>
   </section>
 
   <div class="dash-cols">
