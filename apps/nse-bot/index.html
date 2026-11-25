@@ -8,14 +8,14 @@
 <meta name="theme-color" content="#F5F6F2" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0B0E12" media="(prefers-color-scheme: dark)">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
-<script src="/assets/js/theme-init.js?v=20261126"></script>
+<script src="/assets/js/theme-init.js?v=20261127"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=JetBrains+Mono:wght@400;500;600;700&amp;family=Space+Grotesk:wght@500;600;700&amp;display=swap">
-<link rel="stylesheet" href="/assets/css/site.css?v=20261126">
-<script src="/assets/js/site.js?v=20261126" defer></script>
-<script src="/assets/js/orb.js?v=20261126" defer></script>
-<script src="/assets/js/dashboard.js?v=20261126" defer></script>
+<link rel="stylesheet" href="/assets/css/site.css?v=20261127">
+<script src="/assets/js/site.js?v=20261127" defer></script>
+<script src="/assets/js/orb.js?v=20261127" defer></script>
+<script src="/assets/js/dashboard.js?v=20261127" defer></script>
 </head>
 <body class="dash" data-bot="nse">
 <a class="skip" href="#main">Skip to content</a>
@@ -83,11 +83,17 @@
 
       <section class="panel eq" aria-label="Equity">
         <div class="label-row"><span>Equity · running strategies</span><span data-f="since">—</span></div>
-        <svg viewBox="0 0 1000 180" preserveAspectRatio="none" role="img" aria-label="Equity curve of the running strategies">
-          <line class="eq-base" data-f="base" x1="0" y1="-10" x2="1000" y2="-10"/>
-          <polygon class="eq-area" data-f="area" points=""/>
-          <polyline class="eq-line" data-f="line" points=""/>
-        </svg>
+        <div class="eq-plot" data-f="eqplot" tabindex="0" aria-label="Equity curve of the running strategies. Touch or hover to read the balance; arrow keys step through it.">
+          <svg viewBox="0 0 1000 180" preserveAspectRatio="none" aria-hidden="true">
+            <line class="eq-base" data-f="base" x1="0" y1="-10" x2="1000" y2="-10"/>
+            <polygon class="eq-area" data-f="area" points=""/>
+            <polyline class="eq-line" data-f="line" points=""/>
+          </svg>
+          <div class="eq-cross" data-f="eqcross" hidden></div>
+          <div class="eq-pin" data-f="eqpin" hidden></div>
+          <div class="eq-tip" data-f="eqtip" role="status" hidden></div>
+        </div>
+        <div class="eq-axis" data-f="eqaxis" aria-hidden="true"></div>
         <div class="foot"><span><span class="muted">Start</span> <span data-f="start">—</span></span><span><span class="muted">Now</span> <span class="accent" data-f="now">—</span></span></div>
       </section>
       <section class="panel past" data-f="past" aria-label="Past strategies" hidden>
