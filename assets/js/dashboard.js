@@ -387,6 +387,8 @@
     btn.hidden = !logUnread;
     btn.textContent = '↓ ' + logUnread + ' new line' + (logUnread === 1 ? '' : 's');
     var first = lines[0];
+    var newest = lines[lines.length - 1];               // today's lines; before today's first line, the last session's
+    q('loghead').textContent = !newest || !newest.time || newest.time.slice(0, 10) === M.todayIST() ? "Today's events" : 'Latest events · ' + M.dayMonth(newest.time);
     q('loglines').textContent = lines.length + ' lines' + (first && first.time ? ' · from ' + M.dayMonth(first.time) : '');
     M.tick(q('lineno'), state.seenCount, function (v) { return 'line #' + Math.round(v); });
   }
