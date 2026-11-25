@@ -5,8 +5,10 @@
   function q(scope, f) { return scope.querySelector('[data-f="' + f + '"]'); }
 
   function bookState(b) {
-    if (b.state === 'paused') return b.open_position ? 'paused · ' + M.shortSym(b.open_position.symbol) + ' open' : 'paused';
-    if (b.open_position) return 'in trade · ' + M.shortSym(b.open_position.symbol) + ' ' + (b.open_position.side || '');
+    var ps = M.positions(b);
+    if (b.state === 'paused') return ps.length ? 'paused · ' + ps.map(function (p) { return M.shortSym(p.symbol); }).join(' · ') + ' open' : 'paused';
+    if (ps.length > 1) return 'in ' + ps.length + ' trades · ' + ps.map(function (p) { return M.shortSym(p.symbol); }).join(' · ');
+    if (ps.length) return 'in trade · ' + M.tradesLabel(ps);
     if (b.name === 'POC RETURN' || b.name.indexOf('BREAK') !== -1) return b.watch_count ? 'watching ' + b.watch_count : 'scanning';
     return b.watch_count ? b.watch_count + ' armed' : 'scanning';
   }

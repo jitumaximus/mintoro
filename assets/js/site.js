@@ -209,12 +209,21 @@
     return wd !== 'Sat' && wd !== 'Sun' && hm >= '09:15' && hm < '15:30';
   }
 
+  // Every open trade of a book, oldest first (the crypto 1H RSI books can hold several at once since 26 Nov 2026).
+  function positions(b) {
+    if (b && Array.isArray(b.open_positions)) return b.open_positions;
+    return b && b.open_position ? [b.open_position] : [];
+  }
+  function tradesLabel(ps) {
+    return ps.map(function (p) { return shortSym(p.symbol) + (p.side ? ' ' + p.side : ''); }).join(' · ');
+  }
+
   window.Mintoro = {
     isDark: isDark, reduced: function () { return !!(reduced && reduced.matches); },
     clockIST: clockIST, todayIST: todayIST, hhmm: hhmm, dayMonth: dayMonth,
     money: money, price: price, pct: pct, shortSym: shortSym, h: h, setText: setText, tick: tick, curve: curve,
     fetchBot: fetchBot, poll: poll, topWatch: topWatch, watchNote: watchNote, sumWatch: sumWatch,
-    todayPnl: todayPnl, nseMarketOpen: nseMarketOpen
+    todayPnl: todayPnl, nseMarketOpen: nseMarketOpen, positions: positions, tradesLabel: tradesLabel
   };
 
   document.addEventListener('DOMContentLoaded', function () { syncThemeButtons(); startClocks(); });
