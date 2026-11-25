@@ -52,9 +52,10 @@
     var byName = {};
     books.forEach(function (b) { byName[b.name] = b; });
     var poc = byName['POC RETURN'], lo = byName['1H RSI LONG'], sh = byName['1H RSI SHORT'];
-    q(hero, 'poc').textContent = poc ? (poc.open_position ? 'in trade' : poc.state === 'paused' ? 'paused' : 'watching ' + poc.watch_count) : '—';
-    q(hero, 'long').textContent = lo ? (lo.open_position ? 'in trade' : lo.watch_count + ' armed') : '—';
-    q(hero, 'short').textContent = sh ? (sh.open_position ? 'in trade' : sh.watch_count + ' armed') : '—';
+    function inTrade(b) { var n = M.positions(b).length; return n > 1 ? 'in ' + n + ' trades' : n ? 'in trade' : ''; }
+    q(hero, 'poc').textContent = poc ? (inTrade(poc) || (poc.state === 'paused' ? 'paused' : 'watching ' + poc.watch_count)) : '—';
+    q(hero, 'long').textContent = lo ? (inTrade(lo) || lo.watch_count + ' armed') : '—';
+    q(hero, 'short').textContent = sh ? (inTrade(sh) || sh.watch_count + ' armed') : '—';
   }
 
   var okC = null, okN = null;
