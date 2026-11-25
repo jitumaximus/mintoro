@@ -316,7 +316,8 @@
             h('dt', { text: 'Entry' }), h('dd', { 'data-x': 'entry' }),
             h('dt', { text: 'Now' }), h('dd', { 'data-x': 'now' }),
             h('dt', { text: 'Stop' }), h('dd', { 'data-x': 'stop' }),
-            h('dt', { text: 'Size' }), h('dd', { 'data-x': 'size' }))));
+            h('dt', { text: 'Size' }), h('dd', { 'data-x': 'size' })),
+          h('p', { class: 'mg', title: 'Margin', 'data-x': 'margin' })));
       });
     }
     open.forEach(function (o) {
@@ -342,6 +343,10 @@
       el.querySelector('[data-x="stop"]').textContent = M.price(p.stop) +
         (p.entry && p.stop ? ' (' + (Math.abs(p.stop / p.entry - 1) * 100).toFixed(2) + '%)' : '');
       el.querySelector('[data-x="size"]').textContent = M.price(p.size) + (BOT === 'nse' ? ' qty' : ' units');
+      var mg = el.querySelector('[data-x="margin"]');            // margin the position ties up, bottom right
+      mg.hidden = typeof p.margin !== 'number';
+      mg.textContent = typeof p.margin === 'number' ? M.money(p.margin, cur) : '';
+      mg.setAttribute('aria-label', 'Margin ' + mg.textContent);
     });
   }
 

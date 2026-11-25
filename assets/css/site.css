@@ -290,6 +290,7 @@ button { font: inherit; color: inherit; }
 .trade dl { margin: 16px 0 0; display: grid; grid-template-columns: 96px 1fr; gap: 8px 12px; font-size: 15px; }
 .trade dt { color: var(--muted); }
 .trade dd { margin: 0; overflow-wrap: anywhere; }
+.trade .mg { margin: 10px 0 0; text-align: right; font-size: 14px; font-weight: 600; color: var(--muted); font-variant-numeric: tabular-nums; }
 .trade .why { margin: 14px 0 0; font-size: 13px; line-height: 1.6; overflow-wrap: anywhere; }
 .trade .why b { color: var(--muted); font-weight: 600; margin-right: 4px; }
 .flat-msg { margin: 16px 0 0; font-size: 14px; color: var(--muted); }
