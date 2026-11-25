@@ -231,6 +231,7 @@ button { font: inherit; color: inherit; }
 .orb { display: block; width: 100%; height: clamp(240px, 30vw, 330px); }
 .orb-cap { margin: 0; text-align: center; font-size: 14px; font-weight: 500; color: var(--muted); }
 .orb-cap .dot { margin-right: 8px; }
+.orb-sub { margin: 4px 0 0; text-align: center; font-size: 12px; color: var(--muted); min-height: 1.4em; }
 .stat4 { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-top: 20px; }
 .stat4 > div { border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; min-width: 0; }
 .stat4 .k { font-size: 12px; font-weight: 600; }

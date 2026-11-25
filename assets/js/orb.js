@@ -1,6 +1,6 @@
-/* Scanning orb for the bot dashboards: a slowly turning dotted sphere; while the bot is scanning, instrument
-   symbols drift in from the edges and get absorbed, and watched ones are pushed back out (in the accent colour).
-   At rest (bot stopped, market closed) the orb only breathes. Reduced motion: one still frame. */
+/* Scanning orb for the bot dashboards: a slowly turning dotted sphere. While the bot is scanning, every instrument in
+   its universe drifts in from the edges in turn (a fixed shuffled sweep) and is "checked" in the core; watched ones are
+   pushed back out in the accent colour. At rest (bot stopped, market closed) the orb only breathes. Reduced motion: one still frame. */
 (function () {
   'use strict';
   var TAU = Math.PI * 2;
@@ -32,8 +32,10 @@
     var PTS = sphere(240);
     var W = 0, H = 0, dpr = 1;
     var col = {}, colAt = 0;
-    var st = { running: false, symbols: [], hot: [] };
+    var st = { running: false, symbols: [], hot: [], count: 0 };
     var energy = 0, rot = 0, pulse = 0, clock = 0, last = 0, nextSpawn = 0, parts = [], visible = true, raf = 0;
+    // The sweep walks the whole universe in a fixed shuffled order, so every instrument comes through in turn.
+    var order = [], orderKey = '', cursor = 0, centre = { sym: '', n: 0, t: 0 };
 
     function readColors() {
       var cs = getComputedStyle(document.documentElement);
@@ -54,14 +56,32 @@
     }
     function radius() { return Math.max(42, Math.min(H * 0.3, W * 0.2)); }
 
+    function shuffle(a) {
+      for (var i = a.length - 1; i > 0; i--) { var j = Math.random() * (i + 1) | 0, x = a[i]; a[i] = a[j]; a[j] = x; }
+      return a;
+    }
+    function freeAngle(out) {  // start where the label is furthest from the labels on screen (labels are wide, so x counts less)
+      var best = Math.random() * TAU, bestGap = -1, cx = W / 2, cy = H / 2, R = radius();
+      for (var k = 0; k < 16; k++) {
+        var a = Math.random() * TAU, d0 = out ? R * 0.85 : edge(a), gap = 1e9;
+        var x = cx + Math.cos(a) * d0, y = cy + Math.sin(a) * d0;
+        for (var i = 0; i < parts.length; i++) {
+          if (parts[i].x === undefined) continue;
+          var dx = (x - parts[i].x) / 80, dy = (y - parts[i].y) / 18, g = dx * dx + dy * dy;
+          if (g < gap) gap = g;
+        }
+        if (gap > bestGap) { bestGap = gap; best = a; }
+      }
+      return best;
+    }
     function spawn() {
-      var pool = st.symbols;
-      if (!pool.length) return;
-      var hot = st.hot.length && Math.random() < 0.35;
-      var sym = hot ? st.hot[Math.random() * st.hot.length | 0] : pool[Math.random() * pool.length | 0];
-      var ang = Math.random() * TAU;
-      parts.push({ sym: sym, hot: hot, out: hot || Math.random() < 0.18, ang: ang, t: 0,
-        dur: (hot ? 3.4 : 2.4) + Math.random() * 1.2, wob: (Math.random() - .5) * 0.5 });
+      if (!order.length) return;
+      if (parts.length >= (W < 520 ? 6 : 12)) return;
+      var hot = st.hot.length && Math.random() < 0.22, sym, n = 0;
+      if (hot) sym = st.hot[Math.random() * st.hot.length | 0];
+      else { cursor = (cursor + 1) % order.length; sym = order[cursor]; n = cursor + 1; }
+      parts.push({ sym: sym, n: n, hot: hot, out: hot, ang: freeAngle(hot), t: 0,
+        dur: (hot ? 3.4 : 2.2) + Math.random() * 1.0, wob: (Math.random() - .5) * 0.5 });
     }
 
     function edge(ang) {        // distance from the centre to the canvas edge (minus a margin) in this direction
@@ -132,17 +152,21 @@
       // symbols flowing in and out
       if (!reduced && st.running) {
         nextSpawn -= dt;
-        if (nextSpawn <= 0) { spawn(); nextSpawn = (0.22 + Math.random() * 0.25) * (W < 520 ? 1.8 : 1); }
+        if (nextSpawn <= 0) { spawn(); nextSpawn = (0.2 + Math.random() * 0.2) * (W < 520 ? 1.6 : 1); }
       }
       ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
       for (var j = parts.length - 1; j >= 0; j--) {
         var q = parts[j];
         q.t += dt / q.dur;
-        if (q.t >= 1) { if (!q.out) pulse = Math.min(1, pulse + 0.25); parts.splice(j, 1); continue; }
+        if (q.t >= 1) {
+          if (!q.out) { pulse = Math.min(1, pulse + 0.25); centre = { sym: q.sym, n: q.n, t: clock }; }
+          parts.splice(j, 1); continue;
+        }
         var far = edge(q.ang), near = R * 0.85;
         var e = ease(q.t), d = q.out ? near + (far - near) * e : far - (far - near) * e;
         var ang = q.ang + q.wob * (q.out ? e : 1 - e);
         var px = cx + Math.cos(ang) * d, py = cy + Math.sin(ang) * d;
+        q.x = px; q.y = py;
         var fade = q.out ? Math.min(1, q.t * 5) * Math.min(1, (1 - q.t) * 2.5) : Math.min(1, q.t * 4) * Math.min(1, (1 - q.t) * 3.2);
         var size = q.out ? 11 + 3 * e : 13 - 4 * e;
         ctx.font = (q.hot ? '700 ' : '600 ') + size.toFixed(1) + 'px Inter, system-ui, sans-serif';
@@ -156,6 +180,24 @@
         ctx.fillText(q.sym, px, py);
       }
       ctx.shadowBlur = 0;
+
+      // the instrument just checked, in the core
+      var total = st.count || order.length;
+      if (energy > 0.05 && centre.sym) {
+        var age = clock - centre.t, a = Math.min(1, age * 6) * energy;
+        var fs = Math.max(11, Math.min(16, R * 0.2));
+        ctx.font = '600 ' + (fs * 0.62).toFixed(1) + 'px Inter, system-ui, sans-serif';
+        ctx.fillStyle = rgba(col.fg, 0.55 * a);
+        ctx.fillText('CHECKING', cx, cy - fs * 0.95);
+        ctx.font = '700 ' + fs.toFixed(1) + 'px Inter, system-ui, sans-serif';
+        ctx.fillStyle = rgba(col.fg, 0.95 * a);
+        ctx.fillText(centre.sym, cx, cy);
+        if (centre.n && total) {
+          ctx.font = '500 ' + (fs * 0.68).toFixed(1) + 'px Inter, system-ui, sans-serif';
+          ctx.fillStyle = rgba(col.fg, 0.55 * a);
+          ctx.fillText(Math.min(centre.n, total) + ' / ' + total, cx, cy + fs * 1.05);
+        }
+      }
     }
 
     function frame(t) {
@@ -181,6 +223,13 @@
         st.running = !!s.running;
         st.symbols = s.symbols || [];
         st.hot = s.hot || [];
+        st.count = s.count || 0;
+        var key = st.symbols.length + ':' + st.symbols.join(',');
+        if (key !== orderKey) {           // reshuffle only when the universe itself changes
+          orderKey = key;
+          order = shuffle(st.symbols.slice());
+          cursor = Math.min(cursor, Math.max(0, order.length - 1));
+        }
         if (reduced) { readColors(); draw(0); } else start();
       }
     };
