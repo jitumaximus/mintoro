@@ -8,14 +8,14 @@
 <meta name="theme-color" content="#F5F6F2" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0B0E12" media="(prefers-color-scheme: dark)">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
-<script src="/assets/js/theme-init.js?v=20261137"></script>
+<script src="/assets/js/theme-init.js?v=20261138"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=JetBrains+Mono:wght@400;500;600;700&amp;family=Space+Grotesk:wght@500;600;700&amp;display=swap">
-<link rel="stylesheet" href="/assets/css/site.css?v=20261137">
-<script src="/assets/js/site.js?v=20261137" defer></script>
-<script src="/assets/js/orb.js?v=20261137" defer></script>
-<script src="/assets/js/dashboard.js?v=20261137" defer></script>
+<link rel="stylesheet" href="/assets/css/site.css?v=20261138">
+<script src="/assets/js/site.js?v=20261138" defer></script>
+<script src="/assets/js/orb.js?v=20261138" defer></script>
+<script src="/assets/js/dashboard.js?v=20261138" defer></script>
 </head>
 <body class="dash" data-bot="nse">
 <a class="skip" href="#main">Skip to content</a>
@@ -113,8 +113,8 @@
           <div class="dl-chart" data-f="daily" tabindex="0" aria-label="Daily profit and loss bars. Hover or touch a day to read it; arrow keys step through the days."></div>
         </div>
         <div class="dl-tip" data-f="dailytip" role="status" hidden></div>
-        <table class="sr-only" data-f="dailytable"><caption>Daily profit and loss</caption>
-          <thead><tr><th scope="col">Day</th><th scope="col">US market hours</th><th scope="col">Other hours</th><th scope="col">Net</th><th scope="col">Trades</th></tr></thead><tbody></tbody></table>
+        <div class="sr-only"><table data-f="dailytable"><caption>Daily profit and loss</caption>
+          <thead><tr><th scope="col">Day</th><th scope="col">US market hours</th><th scope="col">Other hours</th><th scope="col">Net</th><th scope="col">Trades</th></tr></thead><tbody></tbody></table></div>
         <p class="dl-note" data-f="dailynote"></p>
       </section>
       <section class="panel past" data-f="past" aria-label="Past strategies" hidden>

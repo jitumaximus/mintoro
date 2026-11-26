@@ -32,7 +32,7 @@
 *, *::before, *::after { box-sizing: border-box; }
 html { -webkit-text-size-adjust: 100%; }
 body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--sans); line-height: 1.5; font-variant-numeric: tabular-nums;
-  transition: background .3s, color .3s; overflow-x: hidden; }
+  transition: background .3s, color .3s; overflow-x: clip; }   /* last safety net only; the cause is fixed where it is */
 a { color: inherit; text-decoration: none; }
 a:hover { opacity: .85; }
 img { max-width: 100%; height: auto; }
@@ -457,7 +457,11 @@ button { font: inherit; color: inherit; }
 :root { --s-us: #1F5FB4; --s-ot: #93580A; }             /* validated pair: CVD dE 24, normal 26 (light) */
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --s-us: #4F95EC; --s-ot: #BC8418; } }
 :root[data-theme="dark"] { --s-us: #4F95EC; --s-ot: #BC8418; }                    /* dark: dE 27 / 28 */
-.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+/* screen-reader only. Use on a block (div/span), never on a <table>: a table ignores width: 1px and keeps its
+   content width, which once pushed the dashboards 100px past a phone screen (26 Nov 2026). */
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden;
+  clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; border: 0; }
+table.sr-only { display: block; }
 .daily { position: relative; }
 .dl-legend { display: flex; flex-wrap: wrap; gap: 6px 16px; margin-top: 10px; font-size: 13px; color: var(--muted); }
 .dl-legend .sw { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; }
