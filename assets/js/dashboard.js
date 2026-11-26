@@ -316,7 +316,9 @@
             h('dt', { text: 'Entry' }), h('dd', { 'data-x': 'entry' }),
             h('dt', { text: 'Now' }), h('dd', { 'data-x': 'now' }),
             h('dt', { text: 'Stop' }), h('dd', { 'data-x': 'stop' }),
-            h('dt', { text: 'Size' }), h('dd', { 'data-x': 'size' })),
+            h('dt', { text: 'Size' }), h('dd', { 'data-x': 'size' }),
+            h('dt', { text: 'Liquidation', 'data-x': 'liq-t' }), h('dd', { 'data-x': 'liq' }),
+            h('dt', { text: 'If stopped', 'data-x': 'loss-t' }), h('dd', { 'data-x': 'loss' })),
           h('p', { class: 'mg', title: 'Margin', 'data-x': 'margin' })));
       });
     }
@@ -342,7 +344,16 @@
       el.querySelector('[data-x="now"]').textContent = p.mark_price === null || p.mark_price === undefined ? '— (waiting for the live price)' : M.price(p.mark_price);
       el.querySelector('[data-x="stop"]').textContent = M.price(p.stop) +
         (p.entry && p.stop ? ' (' + (Math.abs(p.stop / p.entry - 1) * 100).toFixed(2) + '%)' : '');
-      el.querySelector('[data-x="size"]').textContent = M.price(p.size) + (BOT === 'nse' ? ' qty' : ' units');
+      el.querySelector('[data-x="size"]').textContent = typeof p.qty === 'number'
+        ? M.price(p.qty) + ' ' + M.shortSym(p.symbol) : M.price(p.size) + (BOT === 'nse' ? ' qty' : ' units');
+      // liquidation price and the loss if the current stop fills (% of the strategy's balance); hidden when unknown
+      var liq = typeof p.liq_price === 'number', loss = typeof p.loss_pct === 'number';
+      el.querySelector('[data-x="liq-t"]').hidden = el.querySelector('[data-x="liq"]').hidden = !liq;
+      el.querySelector('[data-x="liq"]').textContent = liq ? M.price(p.liq_price) +
+        (p.entry ? ' (' + (Math.abs(p.liq_price / p.entry - 1) * 100).toFixed(2) + '%)' : '') : '';
+      el.querySelector('[data-x="loss-t"]').hidden = el.querySelector('[data-x="loss"]').hidden = !loss;
+      el.querySelector('[data-x="loss"]').textContent = !loss ? '' : p.loss_pct > 0
+        ? '−' + p.loss_pct.toFixed(1) + '% of the strategy' : '+' + (-p.loss_pct).toFixed(1) + '% locked in';
       var mg = el.querySelector('[data-x="margin"]');            // margin the position ties up, bottom right
       mg.hidden = typeof p.margin !== 'number';
       mg.textContent = typeof p.margin === 'number' ? M.money(p.margin, cur) : '';
