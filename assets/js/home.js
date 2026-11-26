@@ -51,9 +51,8 @@
     }
     var byName = {};
     books.forEach(function (b) { byName[b.name] = b; });
-    var poc = byName['POC RETURN'], lo = byName['1H RSI LONG'], sh = byName['1H RSI SHORT'];
+    var lo = byName['1H RSI LONG'], sh = byName['1H RSI SHORT'];       // POC RETURN retired 26 Nov 2026
     function inTrade(b) { var n = M.positions(b).length; return n > 1 ? 'in ' + n + ' trades' : n ? 'in trade' : ''; }
-    q(hero, 'poc').textContent = poc ? (inTrade(poc) || (poc.state === 'paused' ? 'paused' : 'watching ' + poc.watch_count)) : '—';
     q(hero, 'long').textContent = lo ? (inTrade(lo) || lo.watch_count + ' armed') : '—';
     q(hero, 'short').textContent = sh ? (inTrade(sh) || sh.watch_count + ' armed') : '—';
   }
