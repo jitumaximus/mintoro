@@ -532,7 +532,8 @@
   }
 
   // ---------- daily P&L bars (26 Nov 2026) ----------
-  // One bar per IST day (crypto: midnight to midnight; NSE: one trading session), realised P&L of the running
+  // One bar per day (crypto: midnight to midnight New York time, EST/EDT handled by the API; NSE: one trading
+  // session, IST), realised P&L of the running
   // strategies by trade close time, stacked by session: US market hours (NYSE regular hours) vs other hours.
   // Gains stack up from the zero line, losses down; the day's net sits above each bar.
   var dl = { days: [], key: '', i: -1, bound: false, scrolled: false };
@@ -574,7 +575,7 @@
     cols.forEach(function (c, k) { c.classList.toggle('on', k === i); });
     var d = days[i];
     tip.textContent = '';
-    tip.appendChild(h('span', { class: 't', text: dlName(d.date) + (BOT === 'nse' ? ' · session' : ' · IST day') }));
+    tip.appendChild(h('span', { class: 't', text: dlName(d.date) + (BOT === 'nse' ? ' · session' : ' · New York day') }));
     tip.appendChild(h('b', { class: d.net > 0 ? 'accent' : d.net < 0 ? 'red' : '',
       text: d.trades ? M.money(d.net, cur, { signed: true }) : 'No closed trades' }));
     if (d.trades) {
@@ -673,7 +674,7 @@
     q('dailyunit').textContent = BOT === 'nse' ? 'sessions' : 'days';
     q('dailynote').textContent = BOT === 'nse'
       ? 'One bar per trading session (the bot squares off by 15:15 IST). Realised P&L of the running strategies by close time. NSE hours never overlap the US market (NYSE 9:30–16:00 New York), so every bar is other hours.'
-      : 'One bar per day, midnight to midnight IST. Realised P&L of the running strategies by close time; US market hours = NYSE 9:30–16:00 New York (20:00–02:30 IST in winter), holidays excluded. Today’s bar is still running.';
+      : 'One bar per day, midnight to midnight New York time (10:30 IST in winter, 09:30 IST in summer), so each US session sits in a single bar. Realised P&L of the running strategies by close time; US market hours = NYSE 9:30–16:00 New York (20:00–02:30 IST in winter, 19:00–01:30 in summer), holidays excluded. The last bar is still running.';
     var tb = q('dailytable').querySelector('tbody');
     tb.textContent = '';
     days.forEach(function (x) {
