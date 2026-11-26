@@ -578,13 +578,13 @@
     tip.appendChild(h('span', { class: 't', text: dlName(d.date) + (BOT === 'nse' ? ' · session' : ' · New York day') }));
     tip.appendChild(h('b', { class: d.net > 0 ? 'accent' : d.net < 0 ? 'red' : '',
       text: d.trades ? M.money(d.net, cur, { signed: true }) : 'No closed trades' }));
-    if (d.trades) {
+    if (d.trades && BOT !== 'nse') {                             // NSE: one series, no US-session split
       [['us', 'US market hours', d.us], ['ot', 'Other hours', d.other]].forEach(function (r) {
         tip.appendChild(h('div', { class: 'row' }, h('span', null, h('i', { class: 'sw ' + r[0] }), r[1]),
           h('span', { text: M.money(r[2], cur, { signed: true }) })));
       });
-      tip.appendChild(h('div', { class: 'row t' }, h('span', { text: 'Trades closed' }), h('span', { text: String(d.trades) })));
     }
+    if (d.trades) tip.appendChild(h('div', { class: 'row t' }, h('span', { text: 'Trades closed' }), h('span', { text: String(d.trades) })));
     tip.hidden = false;
     var panel = tip.parentNode, pr = panel.getBoundingClientRect(), cr = cols[i].getBoundingClientRect();
     var tw = tip.offsetWidth, left = cr.right - pr.left + 6;
@@ -673,8 +673,9 @@
     sum.className = total > 0 ? 'accent' : total < 0 ? 'red' : '';
     q('dailyunit').textContent = BOT === 'nse' ? 'sessions' : 'days';
     q('dailynote').textContent = BOT === 'nse'
-      ? 'One bar per trading session (the bot squares off by 15:15 IST). Realised P&L of the running strategies by close time. NSE hours never overlap the US market (NYSE 9:30–16:00 New York), so every bar is other hours.'
+      ? 'One bar per trading session (the bot squares off by 15:15 IST). Realised P&L of the running strategies by close time.'
       : 'One bar per day, midnight to midnight New York time (10:30 IST in winter, 09:30 IST in summer), so each US session sits in a single bar. Realised P&L of the running strategies by close time; US market hours = NYSE 9:30–16:00 New York (20:00–02:30 IST in winter, 19:00–01:30 in summer), holidays excluded. The last bar is still running.';
+    box.closest('.daily').classList.toggle('single', BOT === 'nse');
     var tb = q('dailytable').querySelector('tbody');
     tb.textContent = '';
     days.forEach(function (x) {
