@@ -7,7 +7,7 @@
   var DESC = {      // deliberately general: the strategy logic is not published
     'BOOK JUMP': 'Order-flow strategy (retired 23 Nov)',
     'BJ ABSORB': 'Order-flow strategy (retired 23 Nov)',
-    'POC RETURN': 'Mean-reversion to key price levels',
+    'POC RETURN': 'Mean-reversion to key price levels (retired 26 Nov)',
     '1H RSI LONG': 'Momentum-exhaustion longs',
     '1H RSI SHORT': 'Momentum-exhaustion shorts',
     '2H RSI SHORT': 'Momentum-exhaustion shorts',
@@ -531,6 +531,164 @@
     if (eq.i >= 0) eqShow(Math.min(eq.i, eq.pts.length - 1));
   }
 
+  // ---------- daily P&L bars (26 Nov 2026) ----------
+  // One bar per IST day (crypto: midnight to midnight; NSE: one trading session), realised P&L of the running
+  // strategies by trade close time, stacked by session: US market hours (NYSE regular hours) vs other hours.
+  // Gains stack up from the zero line, losses down; the day's net sits above each bar.
+  var dl = { days: [], key: '', i: -1, bound: false, scrolled: false };
+  var WEEKDAY = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  function dlShort(v) {                                          // compact signed label that fits a narrow bar
+    var a = Math.abs(v), s = v > 0 ? '+' : v < 0 ? '−' : '', t;
+    if (cur === 'INR') t = a >= 1e5 ? (a / 1e5).toFixed(a >= 1e6 ? 0 : 1) + 'L' : a >= 1e4 ? Math.round(a / 1e3) + 'k'
+      : a >= 1e3 ? (a / 1e3).toFixed(1) + 'k' : String(Math.round(a));
+    else t = a >= 1e3 ? (a / 1e3).toFixed(1) + 'k' : a >= 10 ? String(Math.round(a)) : a.toFixed(1);
+    return s + t;
+  }
+  function dlName(iso) {
+    var dt = new Date(iso + 'T12:00:00Z');
+    return WEEKDAY[dt.getUTCDay()] + ' ' + M.dayMonth(iso);
+  }
+  function dlBuild(days) {
+    var box = q('daily');
+    box.textContent = '';
+    box.appendChild(h('div', { class: 'dl-zero' }));
+    var prevMon = '';
+    days.forEach(function (d, i) {
+      var mon = M.dayMonth(d.date).split(' ')[1];
+      var col = h('div', { class: 'dl-col' + (i === days.length - 1 ? ' today' : ''), 'data-i': String(i) },
+        h('span', { class: 'dl-val' }),
+        h('div', { class: 'dl-plot' },
+          h('i', { class: 'dl-seg ot pos' }), h('i', { class: 'dl-seg us pos' }),
+          h('i', { class: 'dl-seg ot neg' }), h('i', { class: 'dl-seg us neg' })),
+        h('span', { class: 'dl-day' }, String(parseInt(d.date.slice(8, 10), 10)),
+          h('span', { class: 'm', text: mon !== prevMon ? mon : '' })));
+      prevMon = mon;
+      box.appendChild(col);
+    });
+  }
+  function dlShow(i) {
+    var days = dl.days, box = q('daily'), tip = q('dailytip');
+    if (i < 0 || i >= days.length) return;
+    dl.i = i;
+    var cols = box.querySelectorAll('.dl-col');
+    cols.forEach(function (c, k) { c.classList.toggle('on', k === i); });
+    var d = days[i];
+    tip.textContent = '';
+    tip.appendChild(h('span', { class: 't', text: dlName(d.date) + (BOT === 'nse' ? ' · session' : ' · IST day') }));
+    tip.appendChild(h('b', { class: d.net > 0 ? 'accent' : d.net < 0 ? 'red' : '',
+      text: d.trades ? M.money(d.net, cur, { signed: true }) : 'No closed trades' }));
+    if (d.trades) {
+      [['us', 'US market hours', d.us], ['ot', 'Other hours', d.other]].forEach(function (r) {
+        tip.appendChild(h('div', { class: 'row' }, h('span', null, h('i', { class: 'sw ' + r[0] }), r[1]),
+          h('span', { text: M.money(r[2], cur, { signed: true }) })));
+      });
+      tip.appendChild(h('div', { class: 'row t' }, h('span', { text: 'Trades closed' }), h('span', { text: String(d.trades) })));
+    }
+    tip.hidden = false;
+    var panel = tip.parentNode, pr = panel.getBoundingClientRect(), cr = cols[i].getBoundingClientRect();
+    var tw = tip.offsetWidth, left = cr.right - pr.left + 6;
+    if (left + tw > pr.width - 8) left = cr.left - pr.left - tw - 6;            // flip near the right edge
+    tip.style.left = Math.max(8, left) + 'px';
+    tip.style.top = (cr.top - pr.top + 18) + 'px';
+  }
+  function dlHide() {
+    dl.i = -1;
+    q('dailytip').hidden = true;
+    q('daily').querySelectorAll('.dl-col.on').forEach(function (c) { c.classList.remove('on'); });
+  }
+  function dlBind() {
+    if (dl.bound) return;
+    dl.bound = true;
+    var box = q('daily');
+    function idx(ev) {
+      var c = ev.target.closest && ev.target.closest('.dl-col');
+      return c ? parseInt(c.getAttribute('data-i'), 10) : -1;
+    }
+    box.addEventListener('pointermove', function (ev) {
+      if (ev.pointerType === 'mouse') { var i = idx(ev); if (i >= 0 && i !== dl.i) dlShow(i); }
+    });
+    box.addEventListener('pointerdown', function (ev) {
+      var i = idx(ev);
+      clearTimeout(dl.hideT);
+      if (i >= 0) dlShow(i);
+    });
+    box.addEventListener('pointerup', function (ev) {
+      if (ev.pointerType !== 'mouse') { clearTimeout(dl.hideT); dl.hideT = setTimeout(dlHide, 3000); }
+    });
+    box.addEventListener('pointerleave', function (ev) { if (ev.pointerType === 'mouse') dlHide(); });
+    box.addEventListener('keydown', function (ev) {
+      var n = dl.days.length, i = dl.i < 0 ? n - 1 : dl.i;
+      if (ev.key === 'ArrowLeft') i--; else if (ev.key === 'ArrowRight') i++;
+      else if (ev.key === 'Home') i = 0; else if (ev.key === 'End') i = n - 1;
+      else if (ev.key === 'Escape') { dlHide(); return; } else return;
+      ev.preventDefault();
+      dlShow(Math.max(0, Math.min(n - 1, i)));
+    });
+    box.addEventListener('blur', dlHide);
+    window.addEventListener('resize', function () { if (dl.i >= 0) dlShow(dl.i); });
+  }
+  function renderDaily(d) {
+    var box = q('daily');
+    if (!box) return;
+    var days = (d.daily && d.daily.days) || [];
+    dl.days = days;
+    var key = days.map(function (x) { return x.date; }).join(',');
+    if (key !== dl.key) { dl.key = key; dlBuild(days); if (dl.i >= days.length) dlHide(); }
+    dlBind();
+    var pos = days.map(function (x) { return Math.max(x.us, 0) + Math.max(x.other, 0); });
+    var neg = days.map(function (x) { return -(Math.min(x.us, 0) + Math.min(x.other, 0)); });
+    var maxP = Math.max.apply(null, [0].concat(pos)), maxN = Math.max.apply(null, [0].concat(neg));
+    if (!maxP && !maxN) maxP = maxN = 1;
+    var H = 150, GAP = 2, unit = (H - 4) / (maxP + maxN), zero = 2 + maxP * unit;   // px from the top of the plot
+    box.querySelector('.dl-zero').style.top = (18 + zero) + 'px';
+    var cols = box.querySelectorAll('.dl-col');
+    days.forEach(function (x, i) {
+      var col = cols[i];
+      if (!col) return;
+      var segs = col.querySelectorAll('.dl-seg');                // ot pos, us pos, ot neg, us neg
+      function place(el, v, from, up) {                           // returns where the next segment starts
+        var hgt = Math.abs(v) * unit;
+        el.hidden = !v;
+        if (!v) return from;
+        hgt = Math.max(2, hgt);
+        el.style.height = hgt + 'px';
+        el.style.top = (up ? from - hgt : from) + 'px';
+        return up ? from - hgt - GAP : from + hgt + GAP;
+      }
+      var top = place(segs[0], Math.max(x.other, 0), zero, true);
+      place(segs[1], Math.max(x.us, 0), x.other > 0 ? top : zero, true);
+      var bot = place(segs[2], Math.min(x.other, 0), zero, false);
+      place(segs[3], Math.min(x.us, 0), x.other < 0 ? bot : zero, false);
+      segs[0].classList.toggle('end', !(x.us > 0)); segs[1].classList.add('end');
+      segs[2].classList.toggle('end', !(x.us < 0)); segs[3].classList.add('end');
+      var val = col.querySelector('.dl-val');
+      val.textContent = x.trades ? dlShort(x.net) : '';
+      val.className = 'dl-val' + (x.net > 0 ? ' up' : x.net < 0 ? ' down' : '');
+      col.setAttribute('aria-label', dlName(x.date) + ': ' + (x.trades ? M.money(x.net, cur, { signed: true }) : 'no closed trades'));
+    });
+    var total = days.reduce(function (a, x) { return a + x.net; }, 0);
+    var sum = q('dailysum');
+    sum.textContent = days.length ? M.money(total, cur, { signed: true }) + ' in ' + days.length + ' ' + (BOT === 'nse' ? 'sessions' : 'days') : '—';
+    sum.className = total > 0 ? 'accent' : total < 0 ? 'red' : '';
+    q('dailyunit').textContent = BOT === 'nse' ? 'sessions' : 'days';
+    q('dailynote').textContent = BOT === 'nse'
+      ? 'One bar per trading session (the bot squares off by 15:15 IST). Realised P&L of the running strategies by close time. NSE hours never overlap the US market (NYSE 9:30–16:00 New York), so every bar is other hours.'
+      : 'One bar per day, midnight to midnight IST. Realised P&L of the running strategies by close time; US market hours = NYSE 9:30–16:00 New York (20:00–02:30 IST in winter), holidays excluded. Today’s bar is still running.';
+    var tb = q('dailytable').querySelector('tbody');
+    tb.textContent = '';
+    days.forEach(function (x) {
+      tb.appendChild(h('tr', null, h('th', { scope: 'row', text: dlName(x.date) }),
+        h('td', { text: M.money(x.us, cur, { signed: true }) }), h('td', { text: M.money(x.other, cur, { signed: true }) }),
+        h('td', { text: M.money(x.net, cur, { signed: true }) }), h('td', { text: String(x.trades) })));
+    });
+    if (!dl.scrolled) {                                          // phones: start at the latest day
+      var sc = q('dailyscroll');
+      sc.scrollLeft = sc.scrollWidth;
+      dl.scrolled = true;
+    }
+    if (dl.i >= 0) dlShow(dl.i);
+  }
+
   // ---------- main ----------
   function render(d) {
     var all = d.books || [], events = d.events || [], t = d.totals;
@@ -559,6 +717,7 @@
     renderTrades(all, events);
     renderLog(events);
     renderEquity(d);
+    renderDaily(d);
     renderPast(d);
     state.first = false;
   }
