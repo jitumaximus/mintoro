@@ -336,14 +336,22 @@
         pnlEl.className = 'pnl muted';
       } else {
         var pc = p.mark_price && p.entry ? (p.side === 'long' ? p.mark_price / p.entry - 1 : 1 - p.mark_price / p.entry) * 100 : null;
-        M.tick(pnlEl, p.unrealised_pnl, function (v) { return M.money(v, cur, { signed: true }) + (pc === null ? '' : ' · ' + M.pct(pc, true)); });
+        var pm = typeof p.pnl_pct_margin === 'number' ? p.pnl_pct_margin : null;   // crypto: return on the margin used
+        M.tick(pnlEl, p.unrealised_pnl, function (v) {
+          return M.money(v, cur, { signed: true }) + (pm !== null ? ' · ' + mpct(pm) + ' on margin'
+            : pc === null ? '' : ' · ' + M.pct(pc, true));
+        });
         pnlEl.className = 'pnl ' + (p.unrealised_pnl >= 0 ? 'accent' : 'red');
       }
       el.querySelector('[data-x="book"]').textContent = b.name + ' · since ' + evTime(p.opened_at) + ' IST';
       el.querySelector('[data-x="entry"]').textContent = M.price(p.entry);
-      el.querySelector('[data-x="now"]').textContent = p.mark_price === null || p.mark_price === undefined ? '— (waiting for the live price)' : M.price(p.mark_price);
-      el.querySelector('[data-x="stop"]').textContent = M.price(p.stop) +
-        (p.entry && p.stop ? ' (' + (Math.abs(p.stop / p.entry - 1) * 100).toFixed(2) + '%)' : '');
+      el.querySelector('[data-x="now"]').textContent = p.mark_price === null || p.mark_price === undefined ? '— (waiting for the live price)'
+        : M.price(p.mark_price) + (typeof p.price_move_pct === 'number' ? ' (price ' + M.pct(p.price_move_pct, true) + ')' : '');
+      // stop: its price distance from the entry and, for crypto, what filling it means on the margin (fees incl.)
+      var sp = p.entry && p.stop ? (Math.abs(p.stop / p.entry - 1) * 100).toFixed(2) + '%' : null;
+      var sm = typeof p.stop_pct_margin === 'number' ? p.stop_pct_margin : null;
+      el.querySelector('[data-x="stop"]').textContent = M.price(p.stop) + (sp === null ? '' : sm === null ? ' (' + sp + ')'
+        : ' (price ' + sp + ' · ' + mpct(sm) + ' on margin' + (sm > 0 ? ' locked' : '') + ')');
       el.querySelector('[data-x="size"]').textContent = typeof p.qty === 'number'
         ? M.price(p.qty) + ' ' + M.shortSym(p.symbol) : M.price(p.size) + (BOT === 'nse' ? ' qty' : ' units');
       // liquidation price and the loss if the current stop fills (% of the strategy's balance); hidden when unknown
@@ -353,12 +361,18 @@
         (p.entry ? ' (' + (Math.abs(p.liq_price / p.entry - 1) * 100).toFixed(2) + '%)' : '') : '';
       el.querySelector('[data-x="loss-t"]').hidden = el.querySelector('[data-x="loss"]').hidden = !loss;
       el.querySelector('[data-x="loss"]').textContent = !loss ? '' : p.loss_pct > 0
-        ? '−' + p.loss_pct.toFixed(1) + '% of the strategy' : '+' + (-p.loss_pct).toFixed(1) + '% locked in';
+        ? '−' + p.loss_pct.toFixed(1) + '% of book' : '+' + (-p.loss_pct).toFixed(1) + '% of book locked in';
       var mg = el.querySelector('[data-x="margin"]');            // margin the position ties up, bottom right
       mg.hidden = typeof p.margin !== 'number';
       mg.textContent = typeof p.margin === 'number' ? M.money(p.margin, cur) : '';
       mg.setAttribute('aria-label', 'Margin ' + mg.textContent);
     });
+  }
+
+  // % of margin: whole numbers from 10% (+80%), one decimal below (−4.5%), true minus sign
+  function mpct(v) {
+    var a = Math.abs(v);
+    return (v < 0 ? '−' : v > 0 ? '+' : '') + (a >= 10 ? a.toFixed(0) : a.toFixed(1)) + '%';
   }
 
   // ---------- log ----------
