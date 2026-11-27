@@ -67,6 +67,29 @@
     return 'Last close: ' + M.shortSym(e.symbol) + ' ' + M.money(e.value, cur, { signed: true }) + ' · ' + evTime(e.time) + ' IST';
   }
 
+  // ---------- sparklines (28 Nov 2026) ----------
+  // A tiny SVG line: values -> polyline; colour from a CSS class. Redrawn only when the values change.
+  function spark(el, vals, up) {
+    if (!el) return;
+    var key = vals.map(function (v) { return v.toFixed(2); }).join(',') + (up ? '+' : '-');
+    if (el.getAttribute('data-keys') === key) return;
+    el.setAttribute('data-keys', key);
+    var c = vals.length > 1 ? M.curve(vals, 100, 28, 3) : null;
+    el.innerHTML = c ? '<svg viewBox="0 0 100 28" preserveAspectRatio="none" aria-hidden="true">' +
+      '<polygon class="sp-area" points="0,28 ' + c.line + ' 100,28"/><polyline class="sp-line" points="' + c.line + '"/>' +
+      '<circle class="sp-dot" cx="' + c.last[0].toFixed(1) + '" cy="' + c.last[1].toFixed(1) + '" r="2.2"/></svg>' : '';
+    el.classList.toggle('down', !up);
+  }
+  function bookUpnl(b) {
+    return M.positions(b).reduce(function (a, p) { return a + (typeof p.unrealised_pnl === 'number' ? p.unrealised_pnl : 0); }, 0);
+  }
+  function bookCurve(b) {           // closed-trade balances, then the live balance (incl. open trades)
+    var v = (b.equity || []).map(function (p) { return p.balance; }).filter(function (x) { return typeof x === 'number'; });
+    if (!v.length && typeof b.start_balance === 'number') v.push(b.start_balance);
+    if (typeof b.balance === 'number') v.push(b.balance + bookUpnl(b));
+    return v;
+  }
+
   // ---------- strategies ----------
   function isRunning(b) { return !b.state || b.state === 'running'; }
   function isCurrent(b) { return isRunning(b) || M.positions(b).length > 0; }   // a paused book stays here until its trades close
@@ -92,12 +115,13 @@
     books.forEach(function (b, i) {
       var el = bookEls[b.name];
       if (!el) {
-        el = h('div', { class: 'strat' },
+        el = h('div', { class: 'strat bk-' + colorOf(b.name, i) },
           h('div', { class: 'row' },
             h('div', { class: 'who' }, h('div', { class: 'ic ic-' + colorOf(b.name, i), text: ICON[b.name] || b.name.slice(0, 2) }), h('div', { class: 'nm', text: b.name })),
             h('span', { class: 'st' })),
           h('p', { class: 'desc', text: DESC[b.name] || '' }),
           h('p', { class: 'line' }),
+          h('div', { class: 'strat-spark' }),
           h('p', { class: 'bal' }));
         bookEls[b.name] = el;
         box.appendChild(el);
@@ -105,6 +129,10 @@
       var nOpen = M.positions(b).length, live = nOpen > 0, paused = b.state === 'paused';
       el.classList.toggle('active', live);
       el.classList.toggle('paused', paused && !live);
+      var cv = bookCurve(b), upnl = bookUpnl(b);
+      spark(el.querySelector('.strat-spark'), cv, cv[cv.length - 1] >= (b.start_balance || 0));
+      el.classList.toggle('winning', live && upnl > 0);
+      el.classList.toggle('losing', live && upnl < 0);
       el.querySelector('.st').textContent = live ? (nOpen > 1 ? nOpen + ' trades' : 'In trade') : paused ? 'Paused' : (b.watch_count ? 'Armed' : 'Scanning');
       el.querySelector('.line').textContent = bookLine(b);
       var pnl = b.balance !== null && b.start_balance !== null ? b.balance - b.start_balance : null;
@@ -291,7 +319,20 @@
     });
     if (!(sc.universe || []).length) events.forEach(function (e) { add(e.symbol); });
     var n = sc.count || (sc.universe || []).length || scanUniverse(books, events);
-    orb.update({ running: scanning, symbols: syms, hot: hot, count: n });
+    var rings = books.map(function (b, i) {
+      return { name: b.name, c: colorOf(b.name, i), trades: M.positions(b).map(function (p) {
+        var pm = typeof p.pnl_pct_margin === 'number' ? p.pnl_pct_margin : null;
+        return { sym: M.shortSym(p.symbol), pnl: p.unrealised_pnl || 0, pm: pm || 0,
+          label: typeof p.unrealised_pnl === 'number' ? M.money(p.unrealised_pnl, cur, { signed: true }) + (pm !== null ? ' · ' + mpct(pm) : '') : '' };
+      }) };
+    });
+    // mood: today's realised P&L + open trades, as a share of the running books' start; ±5% maps to ±1
+    var start = books.reduce(function (a, b) { return a + (b.start_balance || 0); }, 0), day = M.todayIST(), today = 0;
+    books.forEach(function (b) {
+      (b.equity || []).forEach(function (p) { if (p.time && p.time.slice(0, 10) === day && typeof p.pnl === 'number') today += p.pnl; });
+      today += bookUpnl(b);
+    });
+    orb.update({ running: scanning, symbols: syms, hot: hot, count: n, books: rings, mood: start ? today / start * 20 : 0 });
     q('orbdot').className = 'dot' + (scanning ? '' : ' off');
     q('orbtext').textContent = scanning
       ? 'Scanning ' + (n ? n + ' instruments' : 'the market') + ' for opportunities'
@@ -322,6 +363,9 @@
       open.forEach(function (o) {
         box.appendChild(h('div', { class: 'trade', 'data-key': o.k },
           h('div', { class: 'head' }, h('span', { class: 'sym' }), h('span', { class: 'side' }), h('span', { class: 'pnl' })),
+          h('div', { class: 'tbar', 'aria-hidden': 'true' },
+            h('div', { class: 'tb-track' }, h('i', { class: 'tb-fill' }), h('i', { class: 'tb-stop' }), h('i', { class: 'tb-entry' }), h('i', { class: 'tb-now' })),
+            h('div', { class: 'tb-lab' }, h('span', { class: 'l-stop' }), h('span', { class: 'l-entry', text: 'entry' }), h('span', { class: 'l-now' }))),
           h('dl', null,
             h('dt', { text: 'Strategy' }), h('dd', { 'data-x': 'book' }),
             h('dt', { text: 'Entry' }), h('dd', { 'data-x': 'entry' }),
@@ -355,6 +399,7 @@
         });
         pnlEl.className = 'pnl ' + (p.unrealised_pnl >= 0 ? 'accent' : 'red');
       }
+      tradeBar(el, p);
       el.querySelector('[data-x="book"]').textContent = b.name + ' · since ' + evTime(p.opened_at) + ' IST';
       el.querySelector('[data-x="entry"]').textContent = M.price(p.entry);
       el.querySelector('[data-x="now"]').textContent = p.mark_price === null || p.mark_price === undefined ? '— (waiting for the live price)'
@@ -387,6 +432,42 @@
       mg.textContent = typeof p.margin === 'number' ? M.money(p.margin, cur) : '';
       mg.setAttribute('aria-label', 'Margin ' + mg.textContent);
     });
+  }
+
+  // stop -> entry -> now on one line: how far the trade has gone, and how close it is to its stop
+  function tradeBar(el, p) {
+    var bar = el.querySelector('.tbar');
+    var stop = typeof p.close_stop === 'number' ? p.close_stop : p.stop, now = p.mark_price, entry = p.entry;
+    if (typeof stop !== 'number' || typeof now !== 'number' || typeof entry !== 'number' || !entry) { bar.hidden = true; return; }
+    bar.hidden = false;
+    var d = p.side === 'short' ? -1 : 1;                // left = against the trade, right = in its favour
+    function x(v) { return (v / entry - 1) * 100 * d; }
+    var xs = x(stop), xn = x(now), lo = Math.min(xs, 0, xn), hi = Math.max(xs, 0, xn);
+    var span = Math.max(hi - lo, 0.2), pad = span * 0.12;
+    lo -= pad; hi += pad;
+    function at(v) { return ((v - lo) / (hi - lo) * 100).toFixed(2) + '%'; }
+    function lab(node, v) {                             // keep labels inside the bar at the ends
+      var f = (v - lo) / (hi - lo) * 100;
+      node.style.left = f.toFixed(2) + '%';
+      node.style.transform = f < 12 ? 'none' : f > 88 ? 'translateX(-100%)' : 'translateX(-50%)';
+      return f;
+    }
+    var fill = el.querySelector('.tb-fill'), up = xn >= 0;
+    fill.style.left = at(Math.min(0, xn)); fill.style.width = (Math.abs(xn) / (hi - lo) * 100).toFixed(2) + '%';
+    fill.className = 'tb-fill ' + (up ? 'up' : 'down');
+    el.querySelector('.tb-stop').style.left = at(xs);
+    el.querySelector('.tb-stop').className = 'tb-stop' + (xs >= 0 ? ' locked' : '');
+    el.querySelector('.tb-entry').style.left = at(0);
+    var nw = el.querySelector('.tb-now');
+    nw.style.left = at(xn); nw.className = 'tb-now ' + (up ? 'up' : 'down');
+    var room = Math.abs(xn - xs);
+    var ls = el.querySelector('.l-stop'), ln = el.querySelector('.l-now');
+    ls.textContent = xs >= 0 ? 'stop · locked' : 'stop';
+    var fs = lab(ls, xs), le = el.querySelector('.l-entry'), fe = lab(le, 0);
+    le.hidden = Math.abs(fe - fs) < 16;                 // too close to the stop label: the stop label wins
+    ln.textContent = 'now · ' + room.toFixed(2) + '% to stop';
+    lab(ln, xn);
+    ln.className = 'l-now ' + (up ? 'accent' : 'red');
   }
 
   // % of margin: whole numbers from 10% (+80%), one decimal below (−4.5%), true minus sign
@@ -430,7 +511,8 @@
         frag.appendChild(h('div', { class: 'log-line' + (fresh ? ' new' : '') },
           h('div', { class: 'meta' },
             h('span', { class: 'muted', text: e.time ? M.hhmm(e.time) : '--:--' }), ' ',
-            h('span', { class: cls, text: KIND[e.kind] || e.kind }), ' ',
+            e.book && COLOR[e.book] !== undefined ? h('i', { class: 'bk-dot sw-' + COLOR[e.book], title: e.book }) : null,
+            h('span', { class: cls + (e.kind === 'ENTRY' || e.kind === 'EXIT' ? ' kb' : ''), text: KIND[e.kind] || e.kind }), ' ',
             h('span', { text: M.shortSym(e.symbol || '') }), ' ',
             h('span', { class: cls, text: evValue(e) })),
           h('div', { class: 'why', text: [e.book, e.kind === 'EXIT' ? e.reason : null].filter(Boolean).join(' · ') })));
@@ -726,6 +808,68 @@
     if (dl.i >= 0) dlShow(dl.i);
   }
 
+  // ---------- open risk (28 Nov 2026) ----------
+  // What every open trade loses if its current stop fills (fees incl.), added up; stops past the entry lock in profit.
+  function renderRisk(books) {
+    var v = q('openrisk'), s = q('openrisknote');
+    if (!v) return;
+    var loss = 0, lock = 0, n = 0, known = 0;
+    books.forEach(function (b) {
+      M.positions(b).forEach(function (p) {
+        n++;
+        if (typeof p.loss_pct !== 'number' || typeof b.balance !== 'number') return;
+        known++;
+        var usd = p.loss_pct / 100 * b.balance;
+        if (usd > 0) loss += usd; else lock -= usd;
+      });
+    });
+    if (!n) { v.textContent = '$0.00'; v.className = 'v'; s.textContent = 'flat · nothing at risk'; return; }
+    if (!known) { v.textContent = '—'; v.className = 'v'; s.textContent = n + ' open'; return; }
+    M.tick(v, -loss, function (x) { return M.money(x, cur); });
+    v.className = 'v ' + (loss > 0 ? 'red' : 'accent');
+    s.textContent = 'if every stop hits · ' + n + ' trade' + (n > 1 ? 's' : '') + (lock > 0 ? ' · ' + M.money(lock, cur) + ' locked in' : '');
+  }
+
+  // ---------- hero sparkline: today's balance (closed trades, then now) ----------
+  function renderHeroSpark(d) {
+    var el = q('herospark');
+    if (!el) {
+      var cell = q('balance') && q('balance').parentNode;
+      if (!cell) return;
+      el = h('div', { class: 'hero-spark', 'data-f': 'herospark' });
+      cell.appendChild(el);
+    }
+    var t = d.totals, day = M.todayIST(), pts = (d.equity_total || []).filter(function (p) { return typeof p.balance === 'number'; });
+    var before = pts.filter(function (p) { return (p.time || '').slice(0, 10) < day; });
+    var vals = (before.length ? [before[before.length - 1].balance] : pts.length ? [pts[0].balance] : [])
+      .concat(pts.filter(function (p) { return (p.time || '').slice(0, 10) === day; }).map(function (p) { return p.balance; }));
+    var now = t.balance + (t.unrealised_pnl || 0);
+    vals.push(now);
+    if (vals.length < 2) vals.unshift(t.start_balance);
+    spark(el, vals, now >= vals[0]);
+    el.title = 'Today: ' + M.money(now - vals[0], cur, { signed: true });
+  }
+
+  // ---------- orb flashes: new entries and exits since the last poll ----------
+  var orbSeen = null;
+  function orbFlashes(events) {
+    var keys = {}, fresh = [];
+    events.forEach(function (e) {
+      if (e.kind !== 'ENTRY' && e.kind !== 'EXIT') return;
+      var k = evKey(e);
+      keys[k] = 1;
+      if (orbSeen && !orbSeen[k]) fresh.push(e);
+    });
+    orbSeen = keys;
+    if (!orb || !orb.flash) return;
+    fresh.reverse().forEach(function (e, i) {
+      setTimeout(function () {
+        orb.flash({ kind: e.kind === 'EXIT' ? 'exit' : 'entry', book: e.book, sym: M.shortSym(e.symbol), value: e.value,
+          label: e.kind === 'EXIT' ? M.money(e.value, cur, { signed: true }) : '' });
+      }, i * 900);
+    });
+  }
+
   // ---------- main ----------
   function render(d) {
     var all = d.books || [], events = d.events || [], t = d.totals;
@@ -754,6 +898,9 @@
     lc.className = 'v ' + (last ? (last.value >= 0 ? 'accent' : 'red') : '');
     q('lastclosenote').textContent = last ? (last.reason ? last.reason + ' · ' : '') + M.shortSym(last.symbol) + ' · ' + (last.book || '') : 'No closed trade in the log';
     renderTrades(all, events);
+    renderRisk(books);
+    renderHeroSpark(d);
+    orbFlashes(events);
     renderLog(events);
     renderEquity(d);
     renderDaily(d);
