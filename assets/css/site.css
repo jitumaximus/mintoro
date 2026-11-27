@@ -553,11 +553,65 @@ table.sr-only { display: block; }
 .log .log-line.new { animation: lg-in .55s ease-out; }
 @keyframes lg-in { 0% { opacity: 0; transform: translateX(-10px); background: rgba(57,255,159,.10); } 100% { opacity: 1; transform: none; background: transparent; } }
 
-/* orb: taller, and a soft stage behind it */
-.orb-wrap { border-radius: 14px; background: radial-gradient(60% 70% at 50% 45%, color-mix(in srgb, var(--accent) 6%, transparent), transparent 70%); }
-.orb { height: clamp(300px, 34vw, 400px); }
-@media (max-width: 640px) {
-  .orb-wrap { margin-inline: -10px; }
-  .orb { height: clamp(320px, 92vw, 400px); }
-  .hero-spark { width: 120px; }
+
+/* ---------- the orb, crypto (28 Nov 2026): always dark, like the live log ---------- */
+.orbx { --o-bg: #060A12; --o-panel: #0A101C; --o-line: #1A2537; --o-line2: #24324A; --o-dim: #64758E; --o-text: #B9C6D8; --o-hi: #EEF4FF;
+  --o-green: #3DFFA8; --o-cyan: #4CC9F0; --o-amber: #F5B83D; --o-gold: #E3C04F; --o-red: #FF5470;
+  --c0: #1FA874; --c1: #8A6CF0; --c2: #BC8418; --c3: #4F95EC; --c4: #D9508F; --c5: #2A9BD0;
+  background: radial-gradient(900px 500px at 50% 50%, rgba(76,201,240,.06), transparent 70%), var(--o-bg) !important;
+  border-color: var(--o-line) !important; color: var(--o-text); font-family: var(--mono); font-size: 11px; padding: 14px 16px 16px; }
+.ox-top { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 12px; }
+.ox-t { color: var(--o-hi); font-size: 12px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; }
+.ox-t::before { content: "● "; color: var(--o-cyan); }
+.ox-s, .ox-lbl { color: var(--o-dim); font-size: 10px; letter-spacing: .12em; text-transform: uppercase; }
+.ox-lbl { margin-bottom: 8px; } .ox-lbl b { color: var(--o-text); font-weight: 600; }
+.ox-up { color: var(--o-green); } .ox-down { color: var(--o-red); }
+.ox-grid { position: relative; display: grid; grid-template-columns: minmax(210px, 250px) minmax(0, 1fr) minmax(230px, 290px); gap: 12px; margin-top: 12px; }
+.ox-wires { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1; }
+.ox-side { position: relative; z-index: 2; min-width: 0; }
+.ox-chans, .ox-stack { display: flex; flex-direction: column; gap: 6px; }
+.ox-chan { border-left: 2px solid var(--bk); padding: 5px 8px 6px; border-radius: 0 4px 4px 0;
+  background: linear-gradient(90deg, color-mix(in srgb, var(--bk) 10%, transparent), transparent); }
+.ox-chan .r1, .ox-chan .r2 { display: flex; justify-content: space-between; gap: 6px; }
+.ox-chan .nm { color: var(--o-hi); font-weight: 600; font-size: 10.5px; letter-spacing: .05em; }
+.ox-chan .st { font-size: 9px; padding: 0 5px; border-radius: 3px; color: var(--bk); border: 1px solid color-mix(in srgb, var(--bk) 60%, transparent); white-space: nowrap; }
+.ox-chan.live .st { background: var(--bk); color: #fff; }
+.ox-chan .sp { height: 22px; margin-top: 3px; }
+.ox-chan .sp svg { display: block; width: 100%; height: 100%; overflow: visible; }
+.ox-chan .sp polyline { fill: none; stroke: var(--bk); stroke-width: 1.5; vector-effect: non-scaling-stroke; }
+.ox-chan .sp polygon { fill: var(--bk); opacity: .14; }
+.ox-chan .r2 { font-size: 10px; margin-top: 1px; } .ox-chan .bl { color: var(--o-hi); }
+.ox-chan .sb { color: var(--o-dim); font-size: 9.5px; overflow-wrap: anywhere; }
+.ox-cell { position: relative; z-index: 0; display: flex; flex-direction: column; min-height: 520px; }
+.ox-orb { display: block; width: 100%; flex: 1; min-height: 420px; }
+.ox-head, .ox-cap, .ox-sub { margin: 0; text-align: center; letter-spacing: .08em; }
+.ox-head { color: var(--o-dim); font-size: 11px; text-transform: uppercase; } .ox-head b { color: var(--o-hi); }
+.ox-cap { color: var(--o-text); font: 500 13px var(--sans); letter-spacing: 0; } .ox-cap .dot { margin-right: 8px; }
+.ox-sub { color: var(--o-dim); font-size: 10px; margin-top: 3px; text-transform: uppercase; } .ox-sub b { color: var(--o-hi); font-weight: 600; }
+.ox-card { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 1px 8px; padding: 5px 8px; border: 1px solid var(--o-line2); border-left: 3px solid var(--k);
+  border-radius: 3px; background: linear-gradient(90deg, color-mix(in srgb, var(--k) 11%, var(--o-panel)), var(--o-panel)); }
+.ox-card.new { animation: ox-in .6s ease-out; }
+@keyframes ox-in { 0% { transform: translateX(14px); opacity: 0; box-shadow: 0 0 22px var(--k); } 100% { box-shadow: none; } }
+.ox-card .ty { display: flex; gap: 6px; align-items: center; min-width: 0; }
+.ox-card .chip { color: var(--k); font-size: 9px; font-weight: 700; letter-spacing: .08em; padding: 0 5px; border-radius: 3px; border: 1px solid currentColor; background: none; }
+.ox-card .sy { color: var(--o-hi); font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ox-card .sc { grid-row: span 2; align-self: center; font-size: 16px; font-weight: 700; color: var(--k); text-align: right; }
+.ox-card .ds { color: var(--o-dim); font-size: 9.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ox-empty { margin: 0; color: var(--o-dim); }
+@media (max-width: 1100px) {
+  .ox-grid { grid-template-columns: minmax(0, 1fr); }
+  .ox-wires { display: none; }
+  .ox-cell { order: -1; min-height: 0; }
+  .ox-orb { flex: none; height: clamp(320px, 80vw, 460px); min-height: 0; }
+  .ox-chans { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); }
+  .ox-stack { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); }
 }
+@media (max-width: 640px) {
+  .orbx { padding: 12px 12px 14px; }
+  .ox-chans { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+/* theme switch on the dashboards: a small round icon button, top right */
+.dash-bar .theme-btn { margin-left: auto; width: 34px; height: 34px; padding: 0; border-radius: 50%; justify-content: center; gap: 0; color: var(--muted); }
+.dash-bar .theme-btn:hover { color: var(--fg); border-color: var(--dash); }
+.dash-bar .theme-btn .label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }

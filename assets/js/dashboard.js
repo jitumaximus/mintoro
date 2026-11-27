@@ -32,7 +32,7 @@
   function q(f) { return document.querySelector('[data-f="' + f + '"]'); }
   var cur = BOT === 'nse' ? 'INR' : 'USD';
   var state = { seen: {}, seenCount: 0, first: true, hot: 0, lastLine: null };
-  var orb = null;
+  var orb = null, orbX = null;
 
   function evKey(e) { return [e.time, e.kind, e.symbol, e.value, e.book].join('|'); }
   function kindClass(e) {
@@ -259,6 +259,7 @@
   }
   function renderWatch(books) {
     watchAll = M.topWatch(books, 1000);
+    if (!q('watch')) { q('watching').textContent = 'Watching ' + watchAll.length; return; }
     var pages = Math.max(1, Math.ceil(watchAll.length / pageSize()));
     if (watchPage >= pages) watchPage = 0;
     drawWatch();
@@ -287,7 +288,7 @@
     });
   }
   function cycleHot() {
-    if (document.hidden) return;
+    if (document.hidden || !q('watch')) return;
     var tiles = q('watch').querySelectorAll('.watch');
     if (state.hot >= tiles.length) {                 // walked past the last tile: next page
       state.hot = 0;
@@ -305,6 +306,7 @@
     return books.reduce(function (m, b) { return Math.max(m, b.watch_count || 0); }, 0);
   }
   function renderOrb(d, books, events) {
+    if (orbX) { renderOrbX(d, books, events); return; }
     if (!orb) return;
     var botUp = d.status === 'active', marketOpen = BOT !== 'nse' || M.nseMarketOpen();
     var scanning = botUp && marketOpen;
@@ -343,6 +345,94 @@
       (sc.last_full.slice(0, 10) === M.todayIST() ? '' : M.dayMonth(sc.last_full) + ' ') + M.hhmm(sc.last_full) + ' IST');
     if (scanning && w) sub.push(w + ' on watch');
     q('orbsub').textContent = sub.join(' · ');
+  }
+
+  // ---------- the orb, crypto (28 Nov 2026): channels in -> orb -> decision stack out ----------
+  var OXK = { ENTRY: ['ENTER', '#A98BFF'], RSI1H_SIGNAL: ['SIGNAL', '#F5B83D'], BREAKEVEN: ['BREAKEVEN', '#4CC9F0'],
+    RSI1H_SKIP: ['SKIP', '#FF5FD2'], RSI1H_STOP_WIDENED: ['STOP', '#F5B83D'], POC_FILLED: ['FILL', '#A98BFF'] };
+  function oxKind(e) {
+    if (e.kind === 'EXIT') return e.value >= 0 ? ['EXIT', '#3DFFA8'] : ['EXIT', '#FF5470'];
+    return OXK[e.kind] || [KIND[e.kind] || e.kind, '#7D8DA6'];
+  }
+  function oxSpark(vals) {
+    var c = vals.length > 1 ? M.curve(vals, 100, 22, 2) : null;
+    return c ? '<svg viewBox="0 0 100 22" preserveAspectRatio="none" aria-hidden="true"><polygon points="0,22 ' + c.line + ' 100,22"/><polyline points="' + c.line + '"/></svg>' : '';
+  }
+  function renderOrbX(d, books, events) {
+    var botUp = d.status === 'active', sc = d.scan || {}, uni = (sc.universe || []).map(M.shortSym);
+    var hot = {}, open = [], armed = 0, nOpen = 0;
+    books.forEach(function (b, i) {
+      armed += b.watch_count || 0;
+      (b.watch || []).forEach(function (w) { hot[M.shortSym(w.symbol)] = colorOf(b.name, i); });
+      M.positions(b).forEach(function (p) {
+        nOpen++;
+        open.push({ s: M.shortSym(p.symbol), b: colorOf(b.name, i), pnl: p.unrealised_pnl || 0, pm: p.pnl_pct_margin || 0 });
+      });
+    });
+    var start = books.reduce(function (a, b) { return a + (b.start_balance || 0); }, 0), day = M.todayIST(), today = 0;
+    books.forEach(function (b) {
+      (b.equity || []).forEach(function (p) { if (p.time && p.time.slice(0, 10) === day && typeof p.pnl === 'number') today += p.pnl; });
+      today += bookUpnl(b);
+    });
+    var mood = start ? Math.max(-1, Math.min(1, today / start * 20)) : 0;
+    orbX.update({ running: botUp, universe: uni, hot: hot, open: open, mood: mood });
+    var n = sc.count || uni.length;
+    q('orbdot').className = 'dot' + (botUp ? '' : ' off');
+    q('orbtext').textContent = botUp ? 'Scanning ' + (n ? n + ' coins' : 'the market') + ' for opportunities' : 'Resting · bot ' + d.status;
+    q('orbsub').textContent = sc.last_full ? ' · full scan hourly · last ' + M.hhmm(sc.last_full) + ' IST' : '';
+    var head = q('orbhead');
+    head.textContent = '';
+    head.appendChild(h('b', { text: String(armed) })); head.appendChild(document.createTextNode(' armed · '));
+    head.appendChild(h('b', { text: String(nOpen) })); head.appendChild(document.createTextNode(' in trade · mood '));
+    head.appendChild(h('span', { class: mood >= 0 ? 'ox-up' : 'ox-down', text: mood >= 0 ? 'risk-on' : 'defensive' }));
+
+    // channels: one per running strategy
+    var box = document.querySelector('[data-o="chans"]'), keys = books.map(function (b) { return b.name; }).join('|');
+    if (box.getAttribute('data-keys') !== keys) {
+      box.setAttribute('data-keys', keys); box.textContent = '';
+      books.forEach(function (b, i) {
+        var el = h('div', { class: 'ox-chan', 'data-c': String(colorOf(b.name, i)) },
+          h('div', { class: 'r1' }, h('span', { class: 'nm', text: b.name }), h('span', { class: 'st' })),
+          h('div', { class: 'sp' }),
+          h('div', { class: 'r2' }, h('span', { class: 'bl' }), h('span', { class: 'ch' })),
+          h('div', { class: 'sb' }));
+        el.style.setProperty('--bk', 'var(--c' + colorOf(b.name, i) + ')');
+        box.appendChild(el);
+      });
+    }
+    books.forEach(function (b, i) {
+      var el = box.children[i], ps = M.positions(b), live = ps.length > 0, u = bookUpnl(b), bal = (b.balance || 0) + u, chg = bal - (b.start_balance || 0);
+      el.classList.toggle('live', live);
+      el.querySelector('.st').textContent = live ? 'IN TRADE ×' + ps.length : b.watch_count ? 'ARMED ' + b.watch_count : 'SCANNING';
+      el.querySelector('.bl').textContent = M.money(bal, cur);
+      var ch = el.querySelector('.ch');
+      ch.textContent = M.money(chg, cur, { signed: true }) + ' · ' + mpct(b.start_balance ? chg / b.start_balance * 100 : 0);
+      ch.className = 'ch ' + (chg >= 0 ? 'ox-up' : 'ox-down');
+      el.querySelector('.sb').textContent = b.trades + ' trades · ' + b.wins + 'W/' + b.losses + 'L' + (live ? ' · ' + ps.map(function (p) { return M.shortSym(p.symbol); }).join(' ') : '');
+      var sp = el.querySelector('.sp'), cv = bookCurve(b), sk = cv.map(function (v) { return v.toFixed(2); }).join(',');
+      if (sp.getAttribute('data-keys') !== sk) { sp.setAttribute('data-keys', sk); sp.innerHTML = oxSpark(cv); }
+    });
+
+    // decision stack: the newest decisions
+    var stack = document.querySelector('[data-o="stack"]');
+    var list = events.filter(function (e) { return e.kind !== 'RSI1H_SCAN' && e.kind !== 'STARTED'; }).slice(0, 9);
+    var sk2 = list.map(evKey).join(',');
+    if (stack.getAttribute('data-keys') !== sk2) {
+      var first = stack.getAttribute('data-keys') === null, had = {};
+      Array.prototype.forEach.call(stack.children, function (c) { had[c.getAttribute('data-e')] = 1; });
+      stack.setAttribute('data-keys', sk2); stack.textContent = '';
+      if (!list.length) stack.appendChild(h('p', { class: 'ox-empty', text: 'No decisions yet today.' }));
+      list.forEach(function (e) {
+        var k = oxKind(e), key = evKey(e);
+        var big = e.kind === 'EXIT' ? M.money(e.value, cur, { signed: true }) : e.kind === 'ENTRY' ? '▲' : e.kind === 'BREAKEVEN' ? '=' : /SKIP/.test(e.kind) ? '×' : '◆';
+        var card = h('div', { class: 'ox-card' + (first || had[key] ? '' : ' new'), 'data-e': key, 'data-k': k[1] },
+          h('div', { class: 'ty' }, h('span', { class: 'chip', text: k[0] }), h('span', { class: 'sy', text: M.shortSym(e.symbol || '') + (e.side ? ' ' + e.side : '') })),
+          h('div', { class: 'sc', text: big }),
+          h('div', { class: 'ds', text: (e.book || '') + ' · ' + evTime(e.time) + ' IST' }));
+        card.style.setProperty('--k', k[1]);
+        stack.appendChild(card);
+      });
+    }
   }
 
   // ---------- open trades ----------
@@ -864,7 +954,7 @@
     if (!orb || !orb.flash) return;
     fresh.reverse().forEach(function (e, i) {
       setTimeout(function () {
-        orb.flash({ kind: e.kind === 'EXIT' ? 'exit' : 'entry', book: e.book, sym: M.shortSym(e.symbol), value: e.value,
+        orb.flash({ kind: e.kind === 'EXIT' ? 'exit' : 'entry', book: e.book, c: COLOR[e.book] || 0, sym: M.shortSym(e.symbol), value: e.value,
           label: e.kind === 'EXIT' ? M.money(e.value, cur, { signed: true }) : '' });
       }, i * 900);
     });
@@ -909,13 +999,15 @@
   }
   function failed() {
     runLine(false, 'Reconnecting…');
-    if (orb) orb.update({ running: false, symbols: [], hot: [] });
+    if (orbX) orbX.update({ running: false, universe: [], hot: {}, open: [] });
+    else if (orb) orb.update({ running: false, symbols: [], hot: [] });
     q('orbdot').className = 'dot off';
     q('orbtext').textContent = 'Reconnecting…';
   }
 
   document.addEventListener('DOMContentLoaded', function () {
-    if (window.MintoroOrb && q('orb')) orb = window.MintoroOrb(q('orb'));
+    if (window.MintoroOrbX && q('orbx')) orb = orbX = window.MintoroOrbX(q('orbx'));
+    else if (window.MintoroOrb && q('orb')) orb = window.MintoroOrb(q('orb'));
     M.poll(BOT, POLL_MS, render, failed);
     setInterval(cycleHot, 1500);
   });
