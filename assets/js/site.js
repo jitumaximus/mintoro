@@ -190,6 +190,7 @@
   function watchNote(w) {
     if (w.distance_pct !== undefined) return w.distance_pct === null ? 'POC ' + price(w.level) : 'POC ' + w.distance_pct.toFixed(2) + '% away';
     if (w.kind === 'pullback') return 'pullback · ' + w.side;
+    if (w.kind === 'retrace') return 'retrace · ' + w.side;
     if (typeof w.rsi_1h === 'number') return '1H RSI ' + w.rsi_1h.toFixed(1) + ' · ' + w.side;
     if (typeof w.rsi_2h === 'number') return '2H RSI ' + w.rsi_2h.toFixed(1) + ' · ' + w.side;
     var m = /\(([\d.]+%)\)/.exec(w.detail || '');
