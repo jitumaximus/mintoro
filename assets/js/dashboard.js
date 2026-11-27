@@ -338,7 +338,7 @@
         var pc = p.mark_price && p.entry ? (p.side === 'long' ? p.mark_price / p.entry - 1 : 1 - p.mark_price / p.entry) * 100 : null;
         var pm = typeof p.pnl_pct_margin === 'number' ? p.pnl_pct_margin : null;   // crypto: return on the margin used
         M.tick(pnlEl, p.unrealised_pnl, function (v) {
-          return M.money(v, cur, { signed: true }) + (pm !== null ? ' · ' + mpct(pm) + ' on margin'
+          return M.money(v, cur, { signed: true }) + (pm !== null ? ' · ' + mpct(pm)
             : pc === null ? '' : ' · ' + M.pct(pc, true));
         });
         pnlEl.className = 'pnl ' + (p.unrealised_pnl >= 0 ? 'accent' : 'red');
@@ -351,7 +351,7 @@
       var sp = p.entry && p.stop ? (Math.abs(p.stop / p.entry - 1) * 100).toFixed(2) + '%' : null;
       var sm = typeof p.stop_pct_margin === 'number' ? p.stop_pct_margin : null;
       el.querySelector('[data-x="stop"]').textContent = M.price(p.stop) + (sp === null ? '' : sm === null ? ' (' + sp + ')'
-        : ' (price ' + sp + ' · ' + mpct(sm) + ' on margin' + (sm > 0 ? ' locked' : '') + ')');
+        : ' (price ' + sp + ' · ' + mpct(sm) + (sm > 0 ? ' locked' : '') + ')');
       el.querySelector('[data-x="size"]').textContent = typeof p.qty === 'number'
         ? M.price(p.qty) + ' ' + M.shortSym(p.symbol) : M.price(p.size) + (BOT === 'nse' ? ' qty' : ' units');
       // liquidation price and the loss if the current stop fills (% of the strategy's balance); hidden when unknown
