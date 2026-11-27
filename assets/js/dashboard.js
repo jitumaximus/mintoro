@@ -8,18 +8,24 @@
     'BOOK JUMP': 'Order-flow strategy (retired 23 Nov)',
     'BJ ABSORB': 'Order-flow strategy (retired 23 Nov)',
     'POC RETURN': 'Mean-reversion to key price levels (retired 26 Nov)',
-    '1H RSI LONG': 'Momentum-exhaustion longs (retired 27 Nov)',
-    '1H RSI SHORT': 'Momentum-exhaustion shorts (retired 27 Nov)',
-    'EMA20 PULLBACK': 'Trend pullbacks, both sides (retired 27 Nov)',
+    '1H RSI LONG': 'Momentum-exhaustion longs',
+    '1H RSI SHORT': 'Momentum-exhaustion shorts',
+    'EMA20 LONG': 'Trend pullbacks, long side',
+    'EMA20 SHORT': 'Trend pullbacks, short side',
+    '4H RETRACE LONG': 'Big-candle retracements, long side',
+    '4H RETRACE SHORT': 'Big-candle retracements, short side',
     '2H RSI SHORT': 'Momentum-exhaustion shorts',
     '2H RSI LONG': 'Momentum-exhaustion longs',
     '1H BREAKOUT': 'Range breakouts, long side',
     '1H BREAKDOWN': 'Range breakdowns, short side'
   };
-  var ICON = { 'EMA20 PULLBACK': 'EP', 'POC RETURN': 'POC', '1H RSI LONG': 'RL', '1H RSI SHORT': 'RS', '2H RSI SHORT': '2S', '2H RSI LONG': '2L', '1H BREAKOUT': 'BO', '1H BREAKDOWN': 'BD' };
+  var ICON = { 'EMA20 LONG': 'EL', 'EMA20 SHORT': 'ES', '4H RETRACE LONG': '4L', '4H RETRACE SHORT': '4S', 'POC RETURN': 'POC', '1H RSI LONG': 'RL', '1H RSI SHORT': 'RS', '2H RSI SHORT': '2S', '2H RSI LONG': '2L', '1H BREAKOUT': 'BO', '1H BREAKDOWN': 'BD' };
   var KIND = { ENTRY: 'ENTER', RSI1H_SIGNAL: 'SIGNAL', RSI1H_SKIP: 'SKIP', RSI1H_SCAN: 'SCAN', POC_ORDER: 'ORDER', POC_FILLED: 'FILL',
     POC_MISSED: 'MISS', POC_ORDER_CANCELLED: 'CANCEL', RSI1H_STOP_WIDENED: 'STOP', BREAKEVEN: 'BE', POC_BUILT: 'POC', STARTED: 'START' };
 
+  // colour follows the book, never its position (six validated slots, site.css --c0..--c5)
+  var COLOR = { '1H RSI LONG': 0, '1H RSI SHORT': 1, 'EMA20 LONG': 2, 'EMA20 SHORT': 3, '4H RETRACE LONG': 4, '4H RETRACE SHORT': 5 };
+  function colorOf(name, i) { return COLOR[name] !== undefined ? COLOR[name] : i % 6; }
   function q(f) { return document.querySelector('[data-f="' + f + '"]'); }
   var cur = BOT === 'nse' ? 'INR' : 'USD';
   var state = { seen: {}, seenCount: 0, first: true, hot: 0, lastLine: null };
@@ -69,7 +75,7 @@
     if (!w.length) return 'Nothing armed · scanning';
     if (w[0].distance_pct !== undefined) return 'Next: ' + M.shortSym(w[0].symbol) + ' · ' + M.watchNote(w[0]).replace('POC ', '');
     if (w[0].detail !== undefined && w[0].rsi_2h === undefined) return 'Watching ' + b.watch_count + ' ranges';
-    if (w[0].kind === 'pullback') return 'Armed: ' + w.slice(0, 3).map(function (x) { return M.shortSym(x.symbol) + ' ' + x.side; }).join(' · ');
+    if (w[0].kind === 'pullback' || w[0].kind === 'retrace') return 'Armed: ' + w.slice(0, 3).map(function (x) { return M.shortSym(x.symbol) + ' ' + x.side; }).join(' · ');
     return 'Armed: ' + w.slice(0, 2).map(function (x) {
       var r = typeof x.rsi_1h === 'number' ? x.rsi_1h : x.rsi_2h;
       return M.shortSym(x.symbol) + ' ' + (typeof r === 'number' ? r.toFixed(1) : '');
@@ -85,7 +91,7 @@
       if (!el) {
         el = h('div', { class: 'strat' },
           h('div', { class: 'row' },
-            h('div', { class: 'who' }, h('div', { class: 'ic ic-' + (i % 4), text: ICON[b.name] || b.name.slice(0, 2) }), h('div', { class: 'nm', text: b.name })),
+            h('div', { class: 'who' }, h('div', { class: 'ic ic-' + colorOf(b.name, i), text: ICON[b.name] || b.name.slice(0, 2) }), h('div', { class: 'nm', text: b.name })),
             h('span', { class: 'st' })),
           h('p', { class: 'desc', text: DESC[b.name] || '' }),
           h('p', { class: 'line' }),
@@ -125,7 +131,7 @@
   }
   function renderSplit(d, current) {
     var sec = q('split');
-    var items = current.map(function (b, i) { return { b: b, c: i % 4 }; }).filter(function (it) { return isRunning(it.b); });
+    var items = current.map(function (b, i) { return { b: b, c: colorOf(b.name, i) }; }).filter(function (it) { return isRunning(it.b); });
     sec.hidden = items.length < 2;
     if (sec.hidden) return;
     var now = items.reduce(function (a, it) { return a + (it.b.balance || 0); }, 0);

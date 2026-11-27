@@ -5,6 +5,7 @@
   --accent-soft: rgba(11,138,94,.10); --violet: #6544D6; --violet-text: #5A38CF; --red: #B4301F; --warn: #93580A;
   --blue: #1F5FB4; --face: #0E1512; --face-eye: #F5F6F2; --star: #6D4AE0; --device: #12142A;
   --blue-soft: rgba(31,95,180,.10); --violet-soft: rgba(101,68,214,.10); --warn-soft: rgba(147,88,10,.10);
+  --c0: #0B8A5E; --c1: #6544D6; --c2: #93580A; --c3: #1F5FB4; --c4: #C0306E; --c5: #007FA3;   /* book colours, validated (28 Nov) */
   --mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;   /* logs only */
   --sans: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   --display: 'Space Grotesk', Inter, system-ui, sans-serif;
@@ -17,6 +18,7 @@
     --accent-soft: rgba(52,224,161,.12); --violet: #B39DFB; --violet-text: #C2B0FF; --red: #FF7A7A; --warn: #F5B83D;
     --blue: #7AB8FF; --face: #1E242D; --face-eye: #F2F5F7; --star: #FFFFFF; --device: #1B2040;
     --blue-soft: rgba(122,184,255,.14); --violet-soft: rgba(179,157,251,.16); --warn-soft: rgba(245,184,61,.16);
+    --c0: #1FA874; --c1: #8A6CF0; --c2: #BC8418; --c3: #4F95EC; --c4: #D9508F; --c5: #2A9BD0;
     color-scheme: dark;
   }
 }
@@ -26,6 +28,7 @@
   --accent-soft: rgba(52,224,161,.12); --violet: #B39DFB; --violet-text: #C2B0FF; --red: #FF7A7A; --warn: #F5B83D;
   --blue: #7AB8FF; --face: #1E242D; --face-eye: #F2F5F7; --star: #FFFFFF; --device: #1B2040;
   --blue-soft: rgba(122,184,255,.14); --violet-soft: rgba(179,157,251,.16); --warn-soft: rgba(245,184,61,.16);
+    --c0: #1FA874; --c1: #8A6CF0; --c2: #BC8418; --c3: #4F95EC; --c4: #D9508F; --c5: #2A9BD0;
   color-scheme: dark;
 }
 
@@ -203,10 +206,13 @@ button { font: inherit; color: inherit; }
 .strat .row { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
 .strat .who { display: flex; align-items: center; gap: 12px; min-width: 0; }
 .strat .ic { width: 38px; height: 38px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; flex: none; }
-.ic-0 { background: var(--accent-soft); color: var(--accent-text); }
-.ic-1 { background: var(--blue-soft); color: var(--blue); }
-.ic-2 { background: var(--violet-soft); color: var(--violet); }
-.ic-3 { background: var(--warn-soft); color: var(--warn); }
+/* one colour per book (by name, dashboard.js COLOR), six validated slots */
+.ic-0 { background: color-mix(in srgb, var(--c0) 13%, transparent); color: var(--c0); }
+.ic-1 { background: color-mix(in srgb, var(--c1) 13%, transparent); color: var(--c1); }
+.ic-2 { background: color-mix(in srgb, var(--c2) 13%, transparent); color: var(--c2); }
+.ic-3 { background: color-mix(in srgb, var(--c3) 13%, transparent); color: var(--c3); }
+.ic-4 { background: color-mix(in srgb, var(--c4) 13%, transparent); color: var(--c4); }
+.ic-5 { background: color-mix(in srgb, var(--c5) 13%, transparent); color: var(--c5); }
 .strat .nm { font-family: var(--display); font-weight: 700; font-size: 17px; }
 .strat.active .nm { color: var(--accent-text); }
 .strat .st { font-size: 12px; font-weight: 600; background: var(--surface2); color: var(--muted); border-radius: 999px; padding: 3px 10px; white-space: nowrap; }
@@ -225,8 +231,9 @@ button { font: inherit; color: inherit; }
 .split-bar { display: flex; height: 22px; border-radius: 7px; overflow: hidden; background: var(--surface2); gap: 2px; }
 .split-bar span { display: flex; align-items: center; justify-content: center; min-width: 0; font-size: 11px; font-weight: 600;
   color: #fff; white-space: nowrap; overflow: hidden; transition: flex-grow .8s ease; }
-.sw-0 { background: var(--accent); } .sw-1 { background: var(--blue); } .sw-2 { background: var(--violet); } .sw-3 { background: var(--warn); }
-.split-bar .sw-0, .split-bar .sw-1, .split-bar .sw-2, .split-bar .sw-3 { color: var(--bg); }
+.sw-0 { background: var(--c0); } .sw-1 { background: var(--c1); } .sw-2 { background: var(--c2); }
+.sw-3 { background: var(--c3); } .sw-4 { background: var(--c4); } .sw-5 { background: var(--c5); }
+.split-bar [class^="sw-"] { color: #FFFFFF; }
 .split-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 12px; margin-top: 16px; }
 .split-card { border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; min-width: 0; }
 .split-card .nm { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: var(--muted); }
