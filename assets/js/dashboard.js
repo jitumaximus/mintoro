@@ -8,9 +8,9 @@
     'BOOK JUMP': 'Order-flow strategy (retired 23 Nov)',
     'BJ ABSORB': 'Order-flow strategy (retired 23 Nov)',
     'POC RETURN': 'Mean-reversion to key price levels (retired 26 Nov)',
-    '1H RSI LONG': 'Momentum-exhaustion longs',
-    '1H RSI SHORT': 'Momentum-exhaustion shorts',
-    'EMA20 PULLBACK': 'Trend pullbacks, both sides',
+    '1H RSI LONG': 'Momentum-exhaustion longs (retired 27 Nov)',
+    '1H RSI SHORT': 'Momentum-exhaustion shorts (retired 27 Nov)',
+    'EMA20 PULLBACK': 'Trend pullbacks, both sides (retired 27 Nov)',
     '2H RSI SHORT': 'Momentum-exhaustion shorts',
     '2H RSI LONG': 'Momentum-exhaustion longs',
     '1H BREAKOUT': 'Range breakouts, long side',
@@ -507,6 +507,7 @@
       var d = (p.t || '').slice(0, 10);                        // the live 'now' point is not a trade day
       if (d && d !== prev && !p.now) { marks.push({ i: i, t: p.t }); prev = d; }
     });
+    if (!marks.length) return;                                  // no trade day yet (e.g. no running strategy)
     var last = n - 1, kept = [];
     marks.forEach(function (m) {
       var x = m.i / last * 100;
@@ -723,7 +724,8 @@
     var running = d.status === 'active';
     var label = !running ? 'bot ' + d.status : BOT === 'nse' ? (M.nseMarketOpen() ? 'running · market open' : 'running · market closed') : 'running';
     runLine(running, label);
-    q('chip').textContent = chip(events);
+    var nRunAll = all.filter(isRunning).length;
+    q('chip').textContent = nRunAll ? chip(events) : 'No strategy running';
     M.tick(q('balance'), t.balance, function (v) { return M.money(v, cur, { compact: true }); });
     M.tick(q('trades'), t.trades, function (v) { return String(Math.round(v)); });
     M.tick(q('wins'), t.wins, function (v) { return String(Math.round(v)); });
@@ -734,6 +736,7 @@
     renderSplit(d, books);
     renderWatch(books.filter(isRunning));
     renderOrb(d, books.filter(isRunning), events);
+    if (!nRunAll) q('orbtext').textContent = 'No strategy running · all strategies retired';
     var skipped = events.slice(0, 40).filter(function (e) { return e.kind === 'SKIP' || e.kind === 'RSI1H_SKIP'; }).length;
     M.tick(q('skipped'), skipped, function (v) { return String(Math.round(v)); });
     var last = events.filter(function (e) { return e.kind === 'EXIT'; })[0];
