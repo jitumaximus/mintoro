@@ -10,12 +10,13 @@
     'POC RETURN': 'Mean-reversion to key price levels (retired 26 Nov)',
     '1H RSI LONG': 'Momentum-exhaustion longs',
     '1H RSI SHORT': 'Momentum-exhaustion shorts',
+    'EMA20 PULLBACK': 'Trend pullbacks, both sides',
     '2H RSI SHORT': 'Momentum-exhaustion shorts',
     '2H RSI LONG': 'Momentum-exhaustion longs',
     '1H BREAKOUT': 'Range breakouts, long side',
     '1H BREAKDOWN': 'Range breakdowns, short side'
   };
-  var ICON = { 'POC RETURN': 'POC', '1H RSI LONG': 'RL', '1H RSI SHORT': 'RS', '2H RSI SHORT': '2S', '2H RSI LONG': '2L', '1H BREAKOUT': 'BO', '1H BREAKDOWN': 'BD' };
+  var ICON = { 'EMA20 PULLBACK': 'EP', 'POC RETURN': 'POC', '1H RSI LONG': 'RL', '1H RSI SHORT': 'RS', '2H RSI SHORT': '2S', '2H RSI LONG': '2L', '1H BREAKOUT': 'BO', '1H BREAKDOWN': 'BD' };
   var KIND = { ENTRY: 'ENTER', RSI1H_SIGNAL: 'SIGNAL', RSI1H_SKIP: 'SKIP', RSI1H_SCAN: 'SCAN', POC_ORDER: 'ORDER', POC_FILLED: 'FILL',
     POC_MISSED: 'MISS', POC_ORDER_CANCELLED: 'CANCEL', RSI1H_STOP_WIDENED: 'STOP', BREAKEVEN: 'BE', POC_BUILT: 'POC', STARTED: 'START' };
 
@@ -68,6 +69,7 @@
     if (!w.length) return 'Nothing armed · scanning';
     if (w[0].distance_pct !== undefined) return 'Next: ' + M.shortSym(w[0].symbol) + ' · ' + M.watchNote(w[0]).replace('POC ', '');
     if (w[0].detail !== undefined && w[0].rsi_2h === undefined) return 'Watching ' + b.watch_count + ' ranges';
+    if (w[0].kind === 'pullback') return 'Armed: ' + w.slice(0, 3).map(function (x) { return M.shortSym(x.symbol) + ' ' + x.side; }).join(' · ');
     return 'Armed: ' + w.slice(0, 2).map(function (x) {
       var r = typeof x.rsi_1h === 'number' ? x.rsi_1h : x.rsi_2h;
       return M.shortSym(x.symbol) + ' ' + (typeof r === 'number' ? r.toFixed(1) : '');
