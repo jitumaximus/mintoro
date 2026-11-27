@@ -1,9 +1,9 @@
-/* The orb, crypto dashboard (28 Nov 2026): channels in -> orb -> decision stack out.
+/* The orb, both dashboards (28 Nov 2026): strategy channels in -> orb.
    A dandelion with one spike per coin in the scan universe. A scan beam walks through every coin; armed coins glow amber;
    open trades are bright stars in their strategy's colour with live P&L. The side facing the strategy channels turns gold.
    Entries fire a beam out to the coin; exits send green / red shockwaves out of the core. Curved wires join each strategy
-   channel (left) to the orb and the orb to the newest decision cards (right), with pulses travelling along them.
-   The panel is always dark (like the live log). Reduced motion: one still frame, no effects. */
+   channel (left) to the orb, with pulses travelling along them. Follows the site theme (colours from the --o-* tokens of
+   the panel); in dark it glows additively, in light it draws with darker ink. Reduced motion: one still frame, no effects. */
 (function () {
   'use strict';
   var TAU = Math.PI * 2;
@@ -13,21 +13,25 @@
   function hash(s) { var x = 2166136261; for (var i = 0; i < s.length; i++) { x ^= s.charCodeAt(i); x = Math.imul(x, 16777619); } return x >>> 0; }
   function ease(t) { return 1 - Math.pow(1 - t, 3); }
   function font(w, px) { return w + ' ' + px + 'px "JetBrains Mono", ui-monospace, monospace'; }
-  function money(v) { return (v < 0 ? '−$' : '+$') + Math.abs(v).toFixed(2); }
   function bez(a, b, c, d, u) { var v = 1 - u; return v * v * v * a + 3 * v * v * u * b + 3 * v * u * u * c + u * u * u * d; }
 
   window.MintoroOrbX = function (root) {
     var orbC = root.querySelector('[data-o="orb"]'), wireC = root.querySelector('[data-o="wires"]');
     var grid = root.querySelector('[data-o="grid"]'), cell = root.querySelector('[data-o="cell"]');
-    var chans = root.querySelector('[data-o="chans"]'), stack = root.querySelector('[data-o="stack"]'), chk = root.querySelector('[data-o="check"]');
+    var chans = root.querySelector('[data-o="chans"]'), chk = root.querySelector('[data-o="check"]');
     var reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     var C = {};
     function readColors() {
       var cs = getComputedStyle(root);
       ['green', 'cyan', 'amber', 'gold', 'red', 'text', 'hi'].forEach(function (k) { C[k] = hex(cs.getPropertyValue('--o-' + k), [200, 200, 200]); });
       C.book = [0, 1, 2, 3, 4, 5].map(function (k) { return hex(cs.getPropertyValue('--c' + k), C.cyan); });
+      C.dark = C.hi[0] + C.hi[1] + C.hi[2] > 500;           // light ink on the panel = dark theme
+      C.star = C.dark ? [255, 255, 255] : C.hi;
     }
     readColors();
+    var colAt = 0;
+    document.addEventListener('mintoro:theme', function () { readColors(); if (reduced) draw(0); });
+    if (window.matchMedia) window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function () { readColors(); if (reduced) draw(0); });
     function surface(c) {
       var o = { c: c, x: c.getContext('2d'), W: 1, H: 1 };
       function size() { var r = c.getBoundingClientRect(), d = Math.min(window.devicePixelRatio || 1, 2); o.W = r.width; o.H = r.height; c.width = Math.max(1, r.width * d); c.height = Math.max(1, r.height * d); o.x.setTransform(d, 0, 0, d, 0, 0); if (reduced) draw(0); }
@@ -36,7 +40,7 @@
       return o;
     }
     var O = surface(orbC), Wr = surface(wireC);
-    var st = { running: false, uni: [], hot: {}, open: [], mood: 0 }, fx = [];
+    var st = { running: false, uni: [], hot: {}, open: [], mood: 0 }, fx = [];   // open: [{s, b, pnl, pm, label}]
     var dirs = null, dirsN = 0, symIndex = {}, proj = [], scanI = 0, T = 0, last = 0, raf = 0, visible = true, chkAt = 0;
 
     function makeDirs(n) {
@@ -48,13 +52,15 @@
 
     function drawOrb(dt) {
       var x = O.x, W = O.W, H = O.H; x.clearRect(0, 0, W, H);
+      if (T - colAt > 1) { colAt = T; readColors(); }
+      var K = C.dark ? 1 : 1.5;                               // light theme: stronger ink, no additive glow
       var uni = st.uni, N = uni.length || 300;
       if (!dirs || dirsN !== N) { dirs = makeDirs(N); dirsN = N; symIndex = {}; uni.forEach(function (s, i) { symIndex[s] = i; }); }
       var g = geom(), cx = g.cx, cy = g.cy, R = g.R, rot = T * 0.07, tilt = 0.25, energy = st.running ? 1 : 0.35;
       var ct = Math.cos(tilt), s2 = Math.sin(tilt), cr = Math.cos(rot), sr = Math.sin(rot);
       var mood = st.mood, tone = mood >= 0 ? mix(C.cyan, C.green, mood) : mix(C.cyan, C.red, -mood * 0.6);
       var glow = x.createRadialGradient(cx, cy, 0, cx, cy, R * 1.25);
-      glow.addColorStop(0, rgba(tone, .22 * energy)); glow.addColorStop(0.5, rgba(tone, .06 * energy)); glow.addColorStop(1, rgba(tone, 0));
+      glow.addColorStop(0, rgba(tone, (C.dark ? .22 : .12) * energy)); glow.addColorStop(0.5, rgba(tone, .05 * energy)); glow.addColorStop(1, rgba(tone, 0));
       x.fillStyle = glow; x.beginPath(); x.arc(cx, cy, R * 1.25, 0, TAU); x.fill();
       if (st.running) scanI = (scanI + dt * 60) % N;
       var ps = [];
@@ -65,17 +71,18 @@
       }
       ps.sort(function (a, b) { return a.z - b.z; });
       proj = [];
-      x.globalCompositeOperation = 'lighter';
+      x.globalCompositeOperation = C.dark ? 'lighter' : 'source-over';
+      var flash = C.dark ? [255, 255, 255] : C.hi;
       ps.forEach(function (p) {
         var s = uni[p.i] || '', dep = (p.z + 1) / 2, dS = (scanI - p.i + N) % N, lit = st.running ? Math.max(0, 1 - dS / 26) : 0;
         var hot = st.hot[s] !== undefined, gold = Math.max(0, -p.X - 0.15) / 0.85;
         var base = mix(mix(C.text, C.cyan, 0.35), C.gold, Math.min(1, gold * 1.2));
-        var c = hot ? C.amber : lit > 0 ? mix(base, [255, 255, 255], lit) : base;
-        x.strokeStyle = rgba(c, ((0.05 + 0.22 * dep) * (hot ? 2.2 : 1) + lit * 0.5) * energy); x.lineWidth = hot || lit > 0.3 ? 1.1 : 0.7;
+        var c = hot ? C.amber : lit > 0 ? mix(base, flash, lit) : base;
+        x.strokeStyle = rgba(c, ((0.05 + 0.22 * dep) * (hot ? 2.2 : 1) * K + lit * 0.5) * energy); x.lineWidth = hot || lit > 0.3 ? 1.1 : 0.7;
         x.beginPath(); x.moveTo(cx + (p.x - cx) * 0.08, cy + (p.y - cy) * 0.08); x.lineTo(p.x, p.y); x.stroke();
         var r = (0.8 + 1.6 * dep) * (hot ? 1.6 : 1) + lit * 1.5 + gold * 1.2;
         if (gold > 0.2 && !hot) { x.strokeStyle = rgba(C.gold, (0.25 + 0.5 * dep) * gold * energy); x.lineWidth = 0.8; x.beginPath(); x.arc(p.x, p.y, r + 2.2, 0, TAU); x.stroke(); }
-        x.fillStyle = rgba(c, (0.25 + 0.65 * dep + lit * 0.4) * (0.4 + 0.6 * energy)); x.beginPath(); x.arc(p.x, p.y, r, 0, TAU); x.fill();
+        x.fillStyle = rgba(c, (0.25 + 0.65 * dep + lit * 0.4) * (0.4 + 0.6 * energy) * (C.dark ? 1 : 1.1)); x.beginPath(); x.arc(p.x, p.y, r, 0, TAU); x.fill();
         proj[p.i] = p;
       });
       x.globalCompositeOperation = 'source-over';
@@ -89,11 +96,12 @@
       st.open.forEach(function (o) {
         var p = proj[symIndex[o.s]] || proj[hash(o.s) % N]; if (!p) return;
         var c = C.book[o.b % 6], pr = 10 + 4 * Math.sin(T * 3 + (o.pm || 0)), gg = x.createRadialGradient(p.x, p.y, 0, p.x, p.y, pr * 2);
-        gg.addColorStop(0, rgba(c, .9)); gg.addColorStop(1, rgba(c, 0)); x.fillStyle = gg; x.beginPath(); x.arc(p.x, p.y, pr * 2, 0, TAU); x.fill();
-        x.fillStyle = '#fff'; x.beginPath(); x.arc(p.x, p.y, 3.2, 0, TAU); x.fill();
+        gg.addColorStop(0, rgba(c, C.dark ? .9 : .6)); gg.addColorStop(1, rgba(c, 0)); x.fillStyle = gg; x.beginPath(); x.arc(p.x, p.y, pr * 2, 0, TAU); x.fill();
+        x.fillStyle = C.dark ? '#fff' : rgba(c, 1); x.beginPath(); x.arc(p.x, p.y, 3.6, 0, TAU); x.fill();
+        if (!C.dark) { x.strokeStyle = '#fff'; x.lineWidth = 1.5; x.stroke(); }
         x.strokeStyle = rgba(c, 1); x.lineWidth = 1.5; x.beginPath(); x.moveTo(cx, cy); x.lineTo(p.x, p.y); x.stroke();
         x.font = font(700, 11); x.fillStyle = rgba(C.hi, 1); x.fillText(o.s, p.x + 10, p.y - 4);
-        x.font = font(600, 10); x.fillStyle = rgba(o.pnl >= 0 ? C.green : C.red, 1); x.fillText(money(o.pnl), p.x + 10, p.y + 9);
+        x.font = font(600, 10); x.fillStyle = rgba(o.pnl >= 0 ? C.green : C.red, 1); x.fillText(o.label || '', p.x + 10, p.y + 9);
       });
       x.fillStyle = rgba(C.hi, .9); x.beginPath(); x.arc(cx, cy, 3, 0, TAU); x.fill();
       x.strokeStyle = rgba(tone, .7); x.lineWidth = 1; x.beginPath(); x.arc(cx, cy, 9 + 2 * Math.sin(T * 2), 0, TAU); x.stroke();
@@ -120,7 +128,7 @@
       if (getComputedStyle(wireC).display === 'none') return;
       var gr = grid.getBoundingClientRect(), oc = cell.getBoundingClientRect(), oR = orbC.getBoundingClientRect();
       var cx = oR.left - gr.left + oR.width / 2, cy = oR.top - gr.top + oR.height / 2, R = Math.min(oR.width * 0.42, oR.height * 0.42);
-      var ch = chans.children, cards = stack.children, n = Math.min(cards.length, 9);
+      var ch = chans.children;
       for (var i = 0; i < ch.length; i++) {
         var r = ch[i].getBoundingClientRect(), sx = r.right - gr.left, sy = r.top - gr.top + r.height / 2, c = C.book[(+ch[i].getAttribute('data-c') || 0) % 6];
         var ang = Math.PI + (i - (ch.length - 1) / 2) * 0.22, ex = cx + Math.cos(ang) * R * 0.9, ey = cy + Math.sin(ang) * R * 0.9, m = sx + (ex - sx) * 0.55;
@@ -133,14 +141,6 @@
           x.fillStyle = rgba(c, 1); x.shadowColor = rgba(c, 1); x.shadowBlur = 8;
           x.beginPath(); x.arc(bez(sx, m, m, ex, u), bez(sy, sy, ey, ey, u), 2.2, 0, TAU); x.fill(); x.shadowBlur = 0;
         }
-      }
-      for (var j = 0; j < n; j++) {
-        var rc = cards[j].getBoundingClientRect(), tx = rc.left - gr.left, ty = rc.top - gr.top + rc.height / 2;
-        var a2 = (j - (n - 1) / 2) * 0.16, ox = cx + Math.cos(a2) * R * 0.92, oy = cy + Math.sin(a2) * R * 0.92, m1 = ox + (tx - ox) * 0.5;
-        var kc = hex(cards[j].getAttribute('data-k'), C.cyan);
-        x.strokeStyle = rgba(kc, j === 0 ? 0.9 : 0.35); x.lineWidth = j === 0 ? 1.8 : 1;
-        x.beginPath(); x.moveTo(ox, oy); x.bezierCurveTo(m1, oy, m1, ty, tx, ty); x.stroke();
-        if (j === 0 && st.running) { var u2 = (T * 0.6) % 1; x.fillStyle = rgba(kc, 1); x.beginPath(); x.arc(bez(ox, m1, m1, tx, u2), bez(oy, oy, ty, ty, u2), 2.6, 0, TAU); x.fill(); }
       }
     }
 

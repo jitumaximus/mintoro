@@ -347,26 +347,24 @@
     q('orbsub').textContent = sub.join(' · ');
   }
 
-  // ---------- the orb, crypto (28 Nov 2026): channels in -> orb -> decision stack out ----------
-  var OXK = { ENTRY: ['ENTER', '#A98BFF'], RSI1H_SIGNAL: ['SIGNAL', '#F5B83D'], BREAKEVEN: ['BREAKEVEN', '#4CC9F0'],
-    RSI1H_SKIP: ['SKIP', '#FF5FD2'], RSI1H_STOP_WIDENED: ['STOP', '#F5B83D'], POC_FILLED: ['FILL', '#A98BFF'] };
-  function oxKind(e) {
-    if (e.kind === 'EXIT') return e.value >= 0 ? ['EXIT', '#3DFFA8'] : ['EXIT', '#FF5470'];
-    return OXK[e.kind] || [KIND[e.kind] || e.kind, '#7D8DA6'];
-  }
+  // ---------- the orb (28 Nov 2026): strategy channels in -> orb ----------
+  var ringC = {};                                        // strategy -> colour slot, for the orb's entry flashes
   function oxSpark(vals) {
     var c = vals.length > 1 ? M.curve(vals, 100, 22, 2) : null;
     return c ? '<svg viewBox="0 0 100 22" preserveAspectRatio="none" aria-hidden="true"><polygon points="0,22 ' + c.line + ' 100,22"/><polyline points="' + c.line + '"/></svg>' : '';
   }
   function renderOrbX(d, books, events) {
-    var botUp = d.status === 'active', sc = d.scan || {}, uni = (sc.universe || []).map(M.shortSym);
+    var botUp = d.status === 'active', marketOpen = BOT !== 'nse' || M.nseMarketOpen(), scanning = botUp && marketOpen;
+    var sc = d.scan || {}, uni = (sc.universe || []).map(M.shortSym);
     var hot = {}, open = [], armed = 0, nOpen = 0;
     books.forEach(function (b, i) {
       armed += b.watch_count || 0;
+      ringC[b.name] = colorOf(b.name, i);
       (b.watch || []).forEach(function (w) { hot[M.shortSym(w.symbol)] = colorOf(b.name, i); });
       M.positions(b).forEach(function (p) {
         nOpen++;
-        open.push({ s: M.shortSym(p.symbol), b: colorOf(b.name, i), pnl: p.unrealised_pnl || 0, pm: p.pnl_pct_margin || 0 });
+        open.push({ s: M.shortSym(p.symbol), b: colorOf(b.name, i), pnl: p.unrealised_pnl || 0, pm: p.pnl_pct_margin || 0,
+          label: typeof p.unrealised_pnl === 'number' ? M.money(p.unrealised_pnl, cur, { signed: true }) : '' });
       });
     });
     var start = books.reduce(function (a, b) { return a + (b.start_balance || 0); }, 0), day = M.todayIST(), today = 0;
@@ -375,10 +373,13 @@
       today += bookUpnl(b);
     });
     var mood = start ? Math.max(-1, Math.min(1, today / start * 20)) : 0;
-    orbX.update({ running: botUp, universe: uni, hot: hot, open: open, mood: mood });
+    orbX.update({ running: scanning, universe: uni, hot: hot, open: open, mood: mood });
+    setFace(scanning, nOpen, armed);
     var n = sc.count || uni.length;
-    q('orbdot').className = 'dot' + (botUp ? '' : ' off');
-    q('orbtext').textContent = botUp ? 'Scanning ' + (n ? n + ' coins' : 'the market') + ' for opportunities' : 'Resting · bot ' + d.status;
+    var what = BOT === 'nse' ? ' futures' : ' coins';
+    q('orbdot').className = 'dot' + (scanning ? '' : ' off');
+    q('orbtext').textContent = scanning ? 'Scanning ' + (n ? n + what : 'the market') + ' for opportunities'
+      : !botUp ? 'Resting · bot ' + d.status : 'Resting · NSE market closed · opens 09:15 IST (Mon–Fri)';
     q('orbsub').textContent = sc.last_full ? ' · full scan hourly · last ' + M.hhmm(sc.last_full) + ' IST' : '';
     var head = q('orbhead');
     head.textContent = '';
@@ -413,26 +414,31 @@
       if (sp.getAttribute('data-keys') !== sk) { sp.setAttribute('data-keys', sk); sp.innerHTML = oxSpark(cv); }
     });
 
-    // decision stack: the newest decisions
-    var stack = document.querySelector('[data-o="stack"]');
-    var list = events.filter(function (e) { return e.kind !== 'RSI1H_SCAN' && e.kind !== 'STARTED'; }).slice(0, 9);
-    var sk2 = list.map(evKey).join(',');
-    if (stack.getAttribute('data-keys') !== sk2) {
-      var first = stack.getAttribute('data-keys') === null, had = {};
-      Array.prototype.forEach.call(stack.children, function (c) { had[c.getAttribute('data-e')] = 1; });
-      stack.setAttribute('data-keys', sk2); stack.textContent = '';
-      if (!list.length) stack.appendChild(h('p', { class: 'ox-empty', text: 'No decisions yet today.' }));
-      list.forEach(function (e) {
-        var k = oxKind(e), key = evKey(e);
-        var big = e.kind === 'EXIT' ? M.money(e.value, cur, { signed: true }) : e.kind === 'ENTRY' ? '▲' : e.kind === 'BREAKEVEN' ? '=' : /SKIP/.test(e.kind) ? '×' : '◆';
-        var card = h('div', { class: 'ox-card' + (first || had[key] ? '' : ' new'), 'data-e': key, 'data-k': k[1] },
-          h('div', { class: 'ty' }, h('span', { class: 'chip', text: k[0] }), h('span', { class: 'sy', text: M.shortSym(e.symbol || '') + (e.side ? ' ' + e.side : '') })),
-          h('div', { class: 'sc', text: big }),
-          h('div', { class: 'ds', text: (e.book || '') + ' · ' + evTime(e.time) + ' IST' }));
-        card.style.setProperty('--k', k[1]);
-        stack.appendChild(card);
-      });
-    }
+  }
+
+  // ---------- the bot's face: its mood follows what the bot is doing (28 Nov 2026) ----------
+  // Asleep while the bot is stopped or the market is closed. Awake it takes turns: searching with a magnifying glass
+  // (the scan), looking around, and thinking (more often while it holds trades or has coins armed).
+  var face = { awake: null, i: 0, timer: 0, busy: 0 };
+  var FACE_CYCLE = ['scan', 'look', 'scan', 'think'];
+  function faceSet(mode) {
+    var el = q('face');
+    if (!el) return;
+    ['scan', 'look', 'think', 'sleep'].forEach(function (m) { el.classList.toggle('m-' + m, m === mode); });
+  }
+  function faceStep() {
+    if (!face.awake) return;
+    var mode = FACE_CYCLE[face.i++ % FACE_CYCLE.length];
+    if (mode === 'think' && !face.busy && Math.random() < 0.5) mode = 'look';
+    faceSet(mode);
+    face.timer = setTimeout(faceStep, mode === 'scan' ? 7000 : 4500);
+  }
+  function setFace(awake, nOpen, armed) {
+    face.busy = nOpen + (armed ? 1 : 0);
+    if (awake === face.awake) return;
+    face.awake = awake;
+    clearTimeout(face.timer);
+    if (awake && !M.reduced()) faceStep(); else faceSet(awake ? 'scan' : 'sleep');
   }
 
   // ---------- open trades ----------
@@ -954,7 +960,7 @@
     if (!orb || !orb.flash) return;
     fresh.reverse().forEach(function (e, i) {
       setTimeout(function () {
-        orb.flash({ kind: e.kind === 'EXIT' ? 'exit' : 'entry', book: e.book, c: COLOR[e.book] || 0, sym: M.shortSym(e.symbol), value: e.value,
+        orb.flash({ kind: e.kind === 'EXIT' ? 'exit' : 'entry', book: e.book, c: ringC[e.book] || 0, sym: M.shortSym(e.symbol), value: e.value,
           label: e.kind === 'EXIT' ? M.money(e.value, cur, { signed: true }) : '' });
       }, i * 900);
     });
@@ -999,6 +1005,7 @@
   }
   function failed() {
     runLine(false, 'Reconnecting…');
+    setFace(false, 0, 0);
     if (orbX) orbX.update({ running: false, universe: [], hot: {}, open: [] });
     else if (orb) orb.update({ running: false, symbols: [], hot: [] });
     q('orbdot').className = 'dot off';

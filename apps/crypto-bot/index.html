@@ -32,7 +32,12 @@
 <main id="main" class="wrap-wide dash-main">
   <section class="dash-hero">
     <div class="dash-id">
-      <div class="face" aria-hidden="true"><svg width="54" height="40" viewBox="0 0 54 40"><rect x="8" y="4" width="11" height="28" rx="5.5"/><rect x="35" y="4" width="11" height="28" rx="5.5"/></svg></div>
+      <div class="face" data-f="face" aria-hidden="true"><svg viewBox="0 0 72 56" width="62" height="48">
+        <g class="fz"><text x="50" y="12">z</text><text x="58" y="6">z</text><text x="64" y="0">Z</text></g>
+        <g class="fe"><rect class="el" x="14" y="12" width="12" height="28" rx="6"/><rect class="er" x="46" y="12" width="12" height="28" rx="6"/></g>
+        <g class="fg"><circle cx="52" cy="26" r="11"/><line x1="60" y1="34" x2="68" y2="44"/></g>
+        <g class="ft"><circle cx="54" cy="4" r="2.2"/><circle cx="61" cy="0" r="2.8"/><circle cx="69" cy="-5" r="3.4"/></g>
+      </svg></div>
       <div>
         <div class="title-row"><h1>Crypto Bot <span class="sub">Live dashboard</span></h1><span class="ver">crypto perps · paper</span></div>
         <p class="run-line" data-f="run" aria-live="polite"><span class="dot" data-f="dot"></span><span data-f="runtext">connecting…</span> · <span data-clock>--:--:--</span> IST</p>
@@ -57,7 +62,7 @@
   </section>
 
   <section class="panel orbx" data-f="orbx" aria-label="Live scan">
-    <div class="ox-top"><span class="ox-t">Live scan · the orb</span><span class="ox-s">channels in → decisions out</span></div>
+    <div class="ox-top"><span class="ox-t">Live scan · the orb</span><span class="ox-s">strategies in → orb</span></div>
     <div class="ox-grid" data-o="grid">
       <canvas class="ox-wires" data-o="wires" aria-hidden="true"></canvas>
       <div class="ox-side"><div class="ox-lbl">Channels <b>· strategies feeding the scan</b></div><div class="ox-chans" data-o="chans"></div></div>
@@ -67,7 +72,6 @@
         <p class="ox-cap" aria-live="polite"><span class="dot off" data-f="orbdot"></span><span data-f="orbtext">Connecting…</span></p>
         <p class="ox-sub"><b data-o="check">—</b><span data-f="orbsub"></span></p>
       </div>
-      <div class="ox-side"><div class="ox-lbl">Decision stack <b>· newest on top</b></div><div class="ox-stack" data-o="stack"></div></div>
     </div>
   </section>
   <div class="dash-cols">

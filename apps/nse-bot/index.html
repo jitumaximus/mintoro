@@ -14,7 +14,7 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=JetBrains+Mono:wght@400;500;600;700&amp;family=Space+Grotesk:wght@500;600;700&amp;display=swap">
 <link rel="stylesheet" href="/assets/css/site.css?v=20261143">
 <script src="/assets/js/site.js?v=20261143" defer></script>
-<script src="/assets/js/orb.js?v=20261143" defer></script>
+<script src="/assets/js/orbx.js?v=20261143" defer></script>
 <script src="/assets/js/dashboard.js?v=20261143" defer></script>
 </head>
 <body class="dash" data-bot="nse">
@@ -32,7 +32,12 @@
 <main id="main" class="wrap-wide dash-main">
   <section class="dash-hero">
     <div class="dash-id">
-      <div class="face nse" aria-hidden="true"><svg width="54" height="40" viewBox="0 0 54 40"><rect x="8" y="4" width="11" height="28" rx="5.5"/><rect x="35" y="4" width="11" height="28" rx="5.5"/></svg></div>
+      <div class="face nse" data-f="face" aria-hidden="true"><svg viewBox="0 0 72 56" width="62" height="48">
+        <g class="fz"><text x="50" y="12">z</text><text x="58" y="6">z</text><text x="64" y="0">Z</text></g>
+        <g class="fe"><rect class="el" x="14" y="12" width="12" height="28" rx="6"/><rect class="er" x="46" y="12" width="12" height="28" rx="6"/></g>
+        <g class="fg"><circle cx="52" cy="26" r="11"/><line x1="60" y1="34" x2="68" y2="44"/></g>
+        <g class="ft"><circle cx="54" cy="4" r="2.2"/><circle cx="61" cy="0" r="2.8"/><circle cx="69" cy="-5" r="3.4"/></g>
+      </svg></div>
       <div>
         <div class="title-row"><h1>NSE Futures Bot <span class="sub">Live dashboard</span></h1><span class="ver">stock futures · paper</span></div>
         <p class="run-line" data-f="run" aria-live="polite"><span class="dot" data-f="dot"></span><span data-f="runtext">connecting…</span> · <span data-clock>--:--:--</span> IST</p>
@@ -56,6 +61,19 @@
     <div class="split-grid" data-f="splitrows"></div>
   </section>
 
+  <section class="panel orbx" data-f="orbx" aria-label="Live scan">
+    <div class="ox-top"><span class="ox-t">Live scan · the orb</span><span class="ox-s">strategies in → orb</span></div>
+    <div class="ox-grid" data-o="grid">
+      <canvas class="ox-wires" data-o="wires" aria-hidden="true"></canvas>
+      <div class="ox-side"><div class="ox-lbl">Channels <b>· strategies feeding the scan</b></div><div class="ox-chans" data-o="chans"></div></div>
+      <div class="ox-cell" data-o="cell">
+        <p class="ox-head" data-f="orbhead">—</p>
+        <canvas class="ox-orb" data-o="orb" aria-hidden="true"></canvas>
+        <p class="ox-cap" aria-live="polite"><span class="dot off" data-f="orbdot"></span><span data-f="orbtext">Connecting…</span></p>
+        <p class="ox-sub"><b data-o="check">—</b><span data-f="orbsub"></span></p>
+      </div>
+    </div>
+  </section>
   <div class="dash-cols">
     <aside class="strategies" aria-label="Strategies">
       <div class="label-row"><span>Running strategies</span><span data-f="online">—</span></div>
@@ -63,14 +81,8 @@
     </aside>
 
     <div class="dash-right">
-      <section class="panel" aria-label="Live flow">
-        <div class="label-row"><span>Live scan</span><span data-f="watching">Watching —</span></div>
-        <div class="orb-wrap">
-          <canvas class="orb" data-f="orb" aria-hidden="true"></canvas>
-          <p class="orb-cap" data-f="orbcap" aria-live="polite"><span class="dot off" data-f="orbdot"></span><span data-f="orbtext">Connecting…</span></p>
-          <p class="orb-sub" data-f="orbsub"></p>
-        </div>
-        <div class="watch-grid" data-f="watch"></div>
+      <section class="panel" aria-label="At a glance">
+        <div class="label-row"><span>At a glance</span><span data-f="watching">Watching —</span></div>
         <div class="stat4">
           <div><div class="k red">Skipped</div><div class="v" data-f="skipped">—</div><div class="s">in the last 40 log lines</div></div>
           <div><div class="k violet">Risk per trade</div><div class="v">10% cap</div><div class="s">max loss per trade</div></div>
