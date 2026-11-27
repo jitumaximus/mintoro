@@ -48,7 +48,7 @@
       for (var i = 0; i < n; i++) { var y = 1 - (i / Math.max(1, n - 1)) * 2, r = Math.sqrt(Math.max(0, 1 - y * y)), th = g * i; out.push([Math.cos(th) * r, y, Math.sin(th) * r, 0.78 + ((hash('d' + i) % 1000) / 1000) * 0.3]); }
       return out;
     }
-    function geom() { return { cx: O.W / 2, cy: O.H / 2, R: Math.min(O.W * 0.42, O.H * 0.42) }; }
+    function geom() { return { cx: O.W / 2, cy: O.H / 2, R: Math.min(O.W * 0.44, O.H * 0.45) }; }
 
     function drawOrb(dt) {
       var x = O.x, W = O.W, H = O.H; x.clearRect(0, 0, W, H);
@@ -127,7 +127,7 @@
       var x = Wr.x; x.clearRect(0, 0, Wr.W, Wr.H);
       if (getComputedStyle(wireC).display === 'none') return;
       var gr = grid.getBoundingClientRect(), oc = cell.getBoundingClientRect(), oR = orbC.getBoundingClientRect();
-      var cx = oR.left - gr.left + oR.width / 2, cy = oR.top - gr.top + oR.height / 2, R = Math.min(oR.width * 0.42, oR.height * 0.42);
+      var cx = oR.left - gr.left + oR.width / 2, cy = oR.top - gr.top + oR.height / 2, R = Math.min(oR.width * 0.44, oR.height * 0.45);
       var ch = chans.children;
       for (var i = 0; i < ch.length; i++) {
         var r = ch[i].getBoundingClientRect(), sx = r.right - gr.left, sy = r.top - gr.top + r.height / 2, c = C.book[(+ch[i].getAttribute('data-c') || 0) % 6];

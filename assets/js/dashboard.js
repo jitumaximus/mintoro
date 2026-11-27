@@ -110,6 +110,7 @@
   var bookEls = {};
   function renderBooks(books) {
     var box = q('books'), keep = {};
+    if (!box) return;                                // the strategy list is gone: the orb's channels show it
     books.forEach(function (b) { keep[b.name] = 1; });
     Object.keys(bookEls).forEach(function (n) { if (!keep[n]) { bookEls[n].remove(); delete bookEls[n]; } });
     books.forEach(function (b, i) {
@@ -980,7 +981,7 @@
     M.tick(q('wins'), t.wins, function (v) { return String(Math.round(v)); });
     M.tick(q('losses'), t.losses, function (v) { return String(Math.round(v)); });
     var nRun = books.filter(isRunning).length;
-    q('online').textContent = running ? nRun + ' running' : books.length + ' stopped';
+    if (q('online')) q('online').textContent = running ? nRun + ' running' : books.length + ' stopped';
     renderBooks(books);
     renderSplit(d, books);
     renderWatch(books.filter(isRunning));

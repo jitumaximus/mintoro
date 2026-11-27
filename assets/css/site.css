@@ -568,7 +568,7 @@ table.sr-only { display: block; }
 .ox-s, .ox-lbl { color: var(--o-dim); font-size: 10px; letter-spacing: .12em; text-transform: uppercase; }
 .ox-lbl { margin-bottom: 8px; } .ox-lbl b { color: var(--o-text); font-weight: 600; }
 .ox-up { color: var(--o-green); } .ox-down { color: var(--o-red); }
-.ox-grid { position: relative; display: grid; grid-template-columns: minmax(220px, 270px) minmax(0, 1fr); gap: 12px; margin-top: 12px; }
+.ox-grid { position: relative; display: grid; grid-template-columns: minmax(200px, 240px) minmax(0, 1fr); gap: 12px; margin-top: 12px; }
 .ox-wires { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1; }
 .ox-side { position: relative; z-index: 2; min-width: 0; }
 .ox-chans, .ox-stack { display: flex; flex-direction: column; gap: 6px; }
@@ -585,8 +585,8 @@ table.sr-only { display: block; }
 .ox-chan .sp polygon { fill: var(--bk); opacity: .14; }
 .ox-chan .r2 { font-size: 10px; margin-top: 1px; } .ox-chan .bl { color: var(--o-hi); }
 .ox-chan .sb { color: var(--o-dim); font-size: 9.5px; overflow-wrap: anywhere; }
-.ox-cell { position: relative; z-index: 0; display: flex; flex-direction: column; min-height: 520px; }
-.ox-orb { display: block; width: 100%; flex: 1; min-height: 420px; }
+.ox-cell { position: relative; z-index: 0; display: flex; flex-direction: column; }
+.ox-orb { display: block; width: 100%; height: clamp(560px, 78vh, 860px); }
 .ox-head, .ox-cap, .ox-sub { margin: 0; text-align: center; letter-spacing: .08em; }
 .ox-head { color: var(--o-dim); font-size: 11px; text-transform: uppercase; } .ox-head b { color: var(--o-hi); }
 .ox-cap { color: var(--o-text); font: 500 13px var(--sans); letter-spacing: 0; } .ox-cap .dot { margin-right: 8px; }
@@ -596,12 +596,13 @@ table.sr-only { display: block; }
   .ox-grid { grid-template-columns: minmax(0, 1fr); }
   .ox-wires { display: none; }
   .ox-cell { order: -1; min-height: 0; }
-  .ox-orb { flex: none; height: clamp(320px, 80vw, 460px); min-height: 0; }
+  .ox-orb { height: clamp(380px, 100vw, 640px); }
   .ox-chans { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); }
   .ox-chans { height: auto; }
 }
 @media (max-width: 640px) {
-  .orbx { padding: 12px 12px 14px; }
+  .orbx { padding: 12px 8px 14px; }
+  .ox-orb { height: clamp(360px, 108vw, 520px); margin-inline: -4px; width: calc(100% + 8px); }
   .ox-chans { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
@@ -610,19 +611,14 @@ table.sr-only { display: block; }
 .dash-bar .theme-btn:hover { color: var(--fg); border-color: var(--dash); }
 .dash-bar .theme-btn .label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
-/* ---------- the bot's face: scanning with a magnifying glass, looking around, thinking, sleeping (28 Nov 2026) ---------- */
-.face .fe, .face .fg, .face .fz, .face .ft { transform-box: view-box; transition: opacity .4s; }
-.face .fg circle { fill: color-mix(in srgb, currentColor 12%, transparent); stroke: currentColor; stroke-width: 3; }
-.face .fg line { stroke: currentColor; stroke-width: 5; stroke-linecap: round; }
+/* ---------- the bot's face: scanning, looking around, thinking, sleeping (28 Nov 2026) ---------- */
+.face .fe, .face .fz, .face .ft { transform-box: view-box; transition: opacity .4s; }
 .face .fz text { fill: currentColor; font: 700 11px var(--sans); }
 .face .ft circle { fill: currentColor; }
-.face .fg, .face .fz, .face .ft { opacity: 0; }
-/* scanning: the eyes dart along the market, the glass sweeps over them */
+.face .fz, .face .ft { opacity: 0; }
+/* scanning: the eyes sweep along the market, left to right, with a quick blink */
 .face.m-scan .fe { animation: fc-dart 2.4s ease-in-out infinite; }
-.face.m-scan .fg { opacity: 1; animation: fc-glass 2.4s ease-in-out infinite; }
-.face.m-scan .er { animation: none; transform: scale(1.15); }
 @keyframes fc-dart { 0%, 100% { transform: translateX(-5px); } 45%, 55% { transform: translateX(5px); } }
-@keyframes fc-glass { 0%, 100% { transform: translate(-26px, 2px) rotate(-8deg); } 45%, 55% { transform: translate(4px, -2px) rotate(6deg); } }
 /* looking around */
 .face.m-look .fe { animation: fc-look 4.5s ease-in-out infinite; }
 @keyframes fc-look { 0%, 8% { transform: translate(0, 0); } 18%, 32% { transform: translate(-7px, -3px); } 42%, 56% { transform: translate(7px, -4px); }
