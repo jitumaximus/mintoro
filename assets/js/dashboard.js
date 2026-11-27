@@ -318,6 +318,7 @@
             h('dt', { text: 'Entry' }), h('dd', { 'data-x': 'entry' }),
             h('dt', { text: 'Now' }), h('dd', { 'data-x': 'now' }),
             h('dt', { text: 'Stop' }), h('dd', { 'data-x': 'stop' }),
+            h('dt', { text: 'Hard stop', 'data-x': 'hard-t' }), h('dd', { 'data-x': 'hard' }),
             h('dt', { text: 'Size' }), h('dd', { 'data-x': 'size' }),
             h('dt', { text: 'Liquidation', 'data-x': 'liq-t' }), h('dd', { 'data-x': 'liq' }),
             h('dt', { text: 'If stopped', 'data-x': 'loss-t' }), h('dd', { 'data-x': 'loss' })),
@@ -352,8 +353,16 @@
       // stop: its price distance from the entry and, for crypto, what filling it means on the margin (fees incl.)
       var sp = p.entry && p.stop ? (Math.abs(p.stop / p.entry - 1) * 100).toFixed(2) + '%' : null;
       var sm = typeof p.stop_pct_margin === 'number' ? p.stop_pct_margin : null;
-      el.querySelector('[data-x="stop"]').textContent = M.price(p.stop) + (sp === null ? '' : sm === null ? ' (' + sp + ')'
+      // EMA20 PULLBACK: until breakeven the nearer stop is a 5m close beyond a level (close_stop); the hard stop then
+      // gets its own row. The API's stop_price_pct / stop_pct_margin are for close_stop in that case.
+      var cs = typeof p.close_stop === 'number';
+      if (cs && typeof p.stop_price_pct === 'number') sp = p.stop_price_pct.toFixed(2) + '%';
+      el.querySelector('[data-x="stop"]').textContent = (cs ? 'close ' + (p.side === 'long' ? 'below ' : 'above ') + M.price(p.close_stop)
+        : M.price(p.stop)) + (sp === null ? '' : sm === null ? ' (' + sp + ')'
         : ' (price ' + sp + ' · ' + mpct(sm) + (sm > 0 ? ' locked' : '') + ')');
+      el.querySelector('[data-x="hard-t"]').hidden = el.querySelector('[data-x="hard"]').hidden = !cs;
+      el.querySelector('[data-x="hard"]').textContent = cs ? M.price(p.stop) +
+        (p.entry ? ' (' + (Math.abs(p.stop / p.entry - 1) * 100).toFixed(2) + '%)' : '') : '';
       el.querySelector('[data-x="size"]').textContent = typeof p.qty === 'number'
         ? M.price(p.qty) + ' ' + M.shortSym(p.symbol) : M.price(p.size) + (BOT === 'nse' ? ' qty' : ' units');
       // liquidation price and the loss if the current stop fills (% of the strategy's balance); hidden when unknown
