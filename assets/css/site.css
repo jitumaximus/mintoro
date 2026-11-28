@@ -279,6 +279,11 @@ button { font: inherit; color: inherit; }
 .pair { display: flex; flex-wrap: wrap; gap: 20px; }
 .pair > section { flex: 1 1 320px; min-width: 0; }
 .pair > section.log { flex: 1 1 360px; }
+/* Today's events fills its card (28 Nov 2026): the card stretches to the Open trades card's height (at least 420px);
+   the list takes the space left and scrolls inside it. height: 0 keeps the list's own length out of the row height. */
+section.panel.log { display: flex; flex-direction: column; min-height: 420px; }
+section.panel.log > .log-head, section.panel.log > .log-jump, section.panel.log > .caret { flex: none; }
+section.panel.log > .log-jump { align-self: flex-start; }
 /* The live log is the one terminal on the site: mono, always dark, neon colours. */
 /* The live log: a terminal, mono with neon colours in dark, ink colours on a pale terminal in light (28 Nov 2026). */
 .log { --n-bg: #F4F8F6; --n-line: #D3E1DA; --n-fg: #13281F; --n-dim: #5A7066; --n-green: #08754F; --n-cyan: #0E7490; --n-pink: #A8307A;
@@ -308,7 +313,7 @@ button { font: inherit; color: inherit; }
 .flat-msg { margin: 16px 0 0; font-size: 14px; color: var(--muted); }
 .log-head { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 10px; font-size: 13px; }
 .log-lines { margin-top: 14px; display: flex; flex-direction: column; gap: 10px; font-size: 13px;
-  max-height: 420px; overflow-y: auto; overscroll-behavior: contain; padding-right: 6px;
+  flex: 1 1 auto; height: 0; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding-right: 6px;
   scrollbar-width: thin; scrollbar-color: var(--n-line) transparent; }
 .log-lines::-webkit-scrollbar { width: 6px; }
 .log-lines::-webkit-scrollbar-thumb { background: var(--n-thumb); border-radius: 3px; }
@@ -693,3 +698,9 @@ table.sr-only { display: block; }
 .mg-row .rb { grid-column: 2 / -1; height: 6px; border-radius: 4px; background: var(--surface2); overflow: hidden; }
 .mg-row .rb span { display: block; height: 100%; width: 0; border-radius: 4px; transition: width .8s ease; }
 @media (max-width: 640px) { .mg-top .r { text-align: left; } .mg .v { font-size: 20px; } }
+
+/* phones and narrow windows (the two cards stack): the list keeps its 420px cap */
+@media (max-width: 760px) {
+  section.panel.log { min-height: 0; }
+  .log-lines { flex: none; height: auto; max-height: 420px; }
+}
