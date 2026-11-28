@@ -1,10 +1,9 @@
-/* Apps list (revamp 28 Nov 2026): one live card per bot, built from the API so every running strategy shows.
+/* Apps list (revamp 28 Nov 2026): one live card per bot, built from the API.
    Same definitions as the dashboards: Balance = realised balance of the running strategies, Open P&L = live value
    of the open trades, Today = realised P&L of the running strategies since 00:00 IST. */
 (function () {
   'use strict';
   var M = window.Mintoro;
-  var COLOR = { '1H RSI LONG': 0, '1H RSI SHORT': 1, 'EMA20 LONG': 2, 'EMA20 SHORT': 3, '4H RETRACE LONG': 4, '4H RETRACE SHORT': 5 };
   var FACE_CYCLE = ['scan', 'look', 'scan', 'think'];
   var seen = {};                                   // bot -> summary for the strip at the top
 
@@ -63,34 +62,6 @@
     if (awake && !M.reduced()) faceStep(bot); else faceSet(bot, awake ? 'scan' : 'sleep');
   }
 
-  // ---------- strategy rows ----------
-  function rowState(b, cur) {
-    var ps = M.positions(b);
-    if (ps.length) {
-      return ps.map(function (p) {
-        var v = p.unrealised_pnl, has = typeof v === 'number';
-        return M.h('span', { class: 'tr' },
-          M.h('b', { text: M.shortSym(p.symbol) }), ' ' + (p.side || ''),
-          has ? M.h('span', { class: v >= 0 ? 'accent' : 'red', text: ' ' + M.money(v, cur, { signed: true }) }) : '');
-      }).concat(b.state === 'paused' ? [M.h('span', { class: 'muted', text: ' · paused' })] : []);
-    }
-    if (b.state === 'paused') return [M.h('span', { class: 'muted', text: 'paused' })];
-    var range = b.name === 'POC RETURN' || b.name.indexOf('BREAK') !== -1;
-    if (b.watch_count) return [M.h('span', { class: range ? 'muted' : 'arm', text: b.watch_count + (range ? ' in range' : ' armed') })];
-    return [M.h('span', { class: 'muted', text: 'scanning' })];
-  }
-  function renderRows(card, books, cur) {
-    var box = q(card, 'rows');
-    box.textContent = '';
-    books.forEach(function (b, i) {
-      var k = COLOR[b.name] !== undefined ? COLOR[b.name] : i % 6, n = M.positions(b).length, u = upnlOf(b);
-      var row = M.h('div', { class: 'srow' + (n ? (u >= 0 ? ' win' : ' lose') : '') },
-        M.h('span', { class: 'sw sw-' + k, 'aria-hidden': 'true' }),
-        M.h('span', { class: 'sn', text: b.name }),
-        M.h.apply(null, ['span', { class: 'ss' }].concat(rowState(b, cur))));
-      box.appendChild(row);
-    });
-  }
   function spark(svg, pts) {
     var path = svg.querySelector('path');
     var vs = (pts || []).slice(-40).map(function (p) { return p.balance; }).filter(function (v) { return typeof v === 'number'; });
@@ -152,8 +123,6 @@
     if (!nOpen) q(card, 'upnl').textContent = '—';
     q(card, 'open').textContent = String(nOpen);
     spark(q(card, 'spark'), d.equity_total);
-    q(card, 'nrun').textContent = run.length + ' running';
-    renderRows(card, books, cur);
     put(q(card, 'last'), lastEvent(d, names, cur));
     var past = (d.books || []).length - books.length, pl = q(card, 'pastlink');
     pl.hidden = !past;

@@ -662,19 +662,6 @@ table.sr-only { display: block; }
 .kspark { display: block; width: 100%; height: 18px; margin-top: 6px; overflow: visible; }
 .kspark path { fill: none; stroke: var(--accent); stroke-width: 1.6; vector-effect: non-scaling-stroke; stroke-linejoin: round; }
 .kspark.down path { stroke: var(--red); }
-.srows-head { display: flex; justify-content: space-between; font: 600 11px var(--sans); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); margin-bottom: -8px; }
-.srows { display: flex; flex-direction: column; gap: 6px; }
-.srow { display: grid; grid-template-columns: 10px minmax(0, auto) minmax(0, 1fr); align-items: center; gap: 10px; padding: 9px 12px;
-  border-radius: 10px; background: var(--surface2); font: 13px var(--sans); border: 1px solid transparent; }
-.srow .sw { width: 9px; height: 9px; border-radius: 50%; }
-.srow .sn { font-weight: 600; white-space: nowrap; }
-.srow .ss { text-align: right; color: var(--fg); min-width: 0; overflow-wrap: anywhere; }
-.srow .ss .tr + .tr::before { content: ' · '; color: var(--muted); }
-.srow .ss .arm { color: var(--warn); font-weight: 500; }
-.srow.win { border-color: color-mix(in srgb, var(--accent) 35%, transparent); background: color-mix(in srgb, var(--accent) 8%, var(--surface2));
-  animation: app-glow 2.8s ease-in-out infinite; }
-.srow.lose { border-color: color-mix(in srgb, var(--red) 25%, transparent); }
-@keyframes app-glow { 0%, 100% { box-shadow: 0 0 0 0 transparent; } 50% { box-shadow: 0 0 14px -2px color-mix(in srgb, var(--accent) 45%, transparent); } }
 .app-last { margin: 0; font: 13px var(--sans); line-height: 1.5; padding-top: 12px; border-top: 1px dashed var(--line); }
 .app-foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px; }
 .past-link { font: 500 13px var(--sans); color: var(--muted); }
@@ -683,4 +670,3 @@ table.sr-only { display: block; }
   .kpi4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .app-card .face { width: 52px; height: 52px; border-radius: 16px; }
 }
-@media (prefers-reduced-motion: reduce) { .srow.win { animation: none; } }
