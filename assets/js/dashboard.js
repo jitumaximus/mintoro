@@ -173,6 +173,7 @@
     splitBar(q('splitnow'), items, 'balance', now);
     var box = q('splitrows');
     var keys = items.map(function (it) { return it.b.name; }).join('|');
+    box.setAttribute('data-n', items.length);
     if (box.getAttribute('data-keys') !== keys) {
       box.textContent = '';
       box.setAttribute('data-keys', keys);
@@ -913,6 +914,45 @@
     if (dl.i >= 0) dlShow(dl.i);
   }
 
+  // ---------- margin in trades vs free (28 Nov 2026) ----------
+  // Per strategy: used = margin of its open trades, free = realised balance minus that (what the bot sizes new trades from).
+  function renderMargin(books) {
+    var sec = q('mg');
+    if (!sec) return;
+    var run = books.map(function (b, i) { return { b: b, c: colorOf(b.name, i) }; }).filter(function (it) { return isRunning(it.b); });
+    sec.hidden = !run.length;
+    if (!run.length) return;
+    var U = 0, F = 0, nT = 0, rows = run.map(function (it) {
+      var ps = M.positions(it.b), used = ps.reduce(function (a, p) { return a + (typeof p.margin === 'number' ? p.margin : 0); }, 0);
+      var bal = it.b.balance || 0, free = Math.max(0, bal - used);
+      U += used; F += free; nT += ps.length;
+      return { it: it, used: used, free: free, bal: bal, n: ps.length };
+    });
+    var tot = U + F, pu = tot ? U / tot * 100 : 0;
+    M.tick(q('mgused'), U, function (v) { return M.money(v, cur, { compact: true }); });
+    M.tick(q('mgfree'), F, function (v) { return M.money(v, cur, { compact: true }); });
+    q('mgnote').textContent = pu.toFixed(0) + '% of balance · ' + nT + ' trade' + (nT === 1 ? '' : 's');
+    q('mgfreenote').textContent = (100 - pu).toFixed(0) + '% · ready for new trades';
+    q('mgbar').style.width = pu.toFixed(1) + '%';
+    var box = q('mgrows'), keys = run.map(function (it) { return it.b.name; }).join('|');
+    if (box.getAttribute('data-keys') !== keys) {
+      box.textContent = '';
+      box.setAttribute('data-keys', keys);
+      rows.forEach(function (r) {
+        box.appendChild(h('div', { class: 'mg-row' }, h('i', { class: 'sw-' + r.it.c }), h('span', { class: 'n', text: r.it.b.name }),
+          h('span', { class: 'u' }), h('div', { class: 'rb' }, h('span', { class: 'sw-' + r.it.c }))));
+      });
+    }
+    rows.forEach(function (r, i) {
+      var el = box.children[i], u = el.querySelector('.u');
+      u.textContent = '';
+      u.appendChild(h('b', { text: M.money(r.used, cur, { compact: true }) }));
+      u.appendChild(document.createTextNode(' used · ' + M.money(r.free, cur, { compact: true }) + ' free'));
+      el.querySelector('.rb span').style.width = (r.bal > 0 ? Math.min(100, r.used / r.bal * 100) : 0).toFixed(1) + '%';
+      el.title = r.it.b.name + ': ' + r.n + ' open trade' + (r.n === 1 ? '' : 's');
+    });
+  }
+
   // ---------- open risk (28 Nov 2026) ----------
   // What every open trade loses if its current stop fills (fees incl.), added up; stops past the entry lock in profit.
   function renderRisk(books) {
@@ -1004,6 +1044,7 @@
     q('lastclosenote').textContent = last ? (last.reason ? last.reason + ' · ' : '') + M.shortSym(last.symbol) + ' · ' + (last.book || '') : 'No closed trade in the log';
     renderTrades(all, events);
     renderRisk(books);
+    renderMargin(books);
     renderHeroSpark(d);
     orbFlashes(events);
     renderLog(events);

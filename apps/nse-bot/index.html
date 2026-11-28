@@ -8,14 +8,14 @@
 <meta name="theme-color" content="#F5F6F2" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0B0E12" media="(prefers-color-scheme: dark)">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
-<script src="/assets/js/theme-init.js?v=20261146"></script>
+<script src="/assets/js/theme-init.js?v=20261147"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=JetBrains+Mono:wght@400;500;600;700&amp;family=Space+Grotesk:wght@500;600;700&amp;display=swap">
-<link rel="stylesheet" href="/assets/css/site.css?v=20261146">
-<script src="/assets/js/site.js?v=20261146" defer></script>
-<script src="/assets/js/orbx.js?v=20261146" defer></script>
-<script src="/assets/js/dashboard.js?v=20261146" defer></script>
+<link rel="stylesheet" href="/assets/css/site.css?v=20261147">
+<script src="/assets/js/site.js?v=20261147" defer></script>
+<script src="/assets/js/orbx.js?v=20261147" defer></script>
+<script src="/assets/js/dashboard.js?v=20261147" defer></script>
 </head>
 <body class="dash" data-bot="nse">
 <a class="skip" href="#main">Skip to content</a>
@@ -83,6 +83,14 @@
           <div><div class="k violet">Risk per trade</div><div class="v">10% cap</div><div class="s">max loss per trade</div></div>
           <div><div class="k warn">Logger</div><div class="v" data-f="lineno">—</div><div class="s">events logged</div></div>
           <div><div class="k blue">Last close</div><div class="v" data-f="lastclose">—</div><div class="s" data-f="lastclosenote">&nbsp;</div></div>
+        </div>
+        <div class="mg" data-f="mg" hidden>
+          <div class="mg-top">
+            <div><div class="k">Margin in trades</div><div class="v" data-f="mgused">—</div><div class="s" data-f="mgnote">&nbsp;</div></div>
+            <div class="r"><div class="k">Free margin</div><div class="v accent" data-f="mgfree">—</div><div class="s" data-f="mgfreenote">&nbsp;</div></div>
+          </div>
+          <div class="mg-bar" aria-hidden="true"><span data-f="mgbar"></span></div>
+          <div class="mg-rows" data-f="mgrows"></div>
         </div>
       </section>
 

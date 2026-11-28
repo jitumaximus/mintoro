@@ -239,12 +239,16 @@ button { font: inherit; color: inherit; }
 .split-card { border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; min-width: 0; }
 .split-card .nm { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: var(--muted); }
 .split-card .nm i { width: 10px; height: 10px; border-radius: 3px; flex: none; }
-.split-card .nm .tag { margin-left: auto; font-size: 11px; font-weight: 600; border-radius: 999px; padding: 1px 8px; background: var(--accent-soft); color: var(--accent-text); }
+.split-card .nm .tag { margin-left: auto; font-size: 11px; font-weight: 600; border-radius: 999px; padding: 2px 8px; white-space: nowrap; flex: none; line-height: 1.5; background: var(--accent-soft); color: var(--accent-text); }
+.split-card .nm span:nth-child(2) { min-width: 0; }
+.split-grid[data-n="6"], .split-grid[data-n="3"] { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.split-grid[data-n="4"] { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+@media (max-width: 1000px) { .split-grid[data-n="4"] { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 .split-card .bal { font-family: var(--display); font-size: 24px; font-weight: 700; letter-spacing: -0.02em; margin-top: 6px; font-variant-numeric: tabular-nums; }
 .split-card .chg { font-size: 14px; font-weight: 600; font-variant-numeric: tabular-nums; }
 .split-card .meta { margin: 8px 0 0; font-size: 12px; color: var(--muted); line-height: 1.6; white-space: pre-line; }
 @media (max-width: 640px) {
-  .split-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  .split-grid, .split-grid[data-n] { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
   .split-card { padding: 12px; }
   .split-card .nm { font-size: 11px; gap: 6px; flex-wrap: wrap; }
   .split-card .nm .tag { margin-left: 0; }
@@ -670,3 +674,22 @@ table.sr-only { display: block; }
   .kpi4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .app-card .face { width: 52px; height: 52px; border-radius: 16px; }
 }
+
+/* ---------- margin in trades vs free (At a glance, 28 Nov 2026) ---------- */
+.mg { margin-top: 12px; border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; }
+.mg-top { display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.mg-top .r { text-align: right; }
+.mg .k { font-size: 12px; font-weight: 600; color: var(--violet-text); } .mg .r .k { color: var(--accent-text); }
+.mg .v { font-family: var(--display); font-size: 24px; font-weight: 700; margin-top: 4px; font-variant-numeric: tabular-nums; }
+.mg .s { font-size: 12px; color: var(--muted); }
+.mg-bar { height: 10px; border-radius: 6px; background: var(--accent-soft); overflow: hidden; margin-top: 12px; }
+.mg-bar span { display: block; height: 100%; width: 0; background: var(--violet); border-radius: 6px 0 0 6px; transition: width .8s ease; }
+.mg-rows { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 10px 24px; margin-top: 14px; }
+.mg-row { display: grid; grid-template-columns: 10px minmax(0, 1fr) auto; align-items: center; gap: 4px 10px; font-size: 12px; }
+.mg-row i { width: 10px; height: 10px; border-radius: 3px; }
+.mg-row .n { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mg-row .u { color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.mg-row .u b { color: var(--fg); font-weight: 600; }
+.mg-row .rb { grid-column: 2 / -1; height: 6px; border-radius: 4px; background: var(--surface2); overflow: hidden; }
+.mg-row .rb span { display: block; height: 100%; width: 0; border-radius: 4px; transition: width .8s ease; }
+@media (max-width: 640px) { .mg-top .r { text-align: left; } .mg .v { font-size: 20px; } }
