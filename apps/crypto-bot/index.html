@@ -8,20 +8,20 @@
 <meta name="theme-color" content="#F5F6F2" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0B0E12" media="(prefers-color-scheme: dark)">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
-<script src="/assets/js/theme-init.js?v=20261145"></script>
+<script src="/assets/js/theme-init.js?v=20261146"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=JetBrains+Mono:wght@400;500;600;700&amp;family=Space+Grotesk:wght@500;600;700&amp;display=swap">
-<link rel="stylesheet" href="/assets/css/site.css?v=20261145">
-<script src="/assets/js/site.js?v=20261145" defer></script>
-<script src="/assets/js/orbx.js?v=20261145" defer></script>
-<script src="/assets/js/dashboard.js?v=20261145" defer></script>
+<link rel="stylesheet" href="/assets/css/site.css?v=20261146">
+<script src="/assets/js/site.js?v=20261146" defer></script>
+<script src="/assets/js/orbx.js?v=20261146" defer></script>
+<script src="/assets/js/dashboard.js?v=20261146" defer></script>
 </head>
 <body class="dash" data-bot="crypto">
 <a class="skip" href="#main">Skip to content</a>
 <header class="site-header dash-bar">
   <div class="wrap-wide">
-    <a class="back" href="/apps/">← mintoro / apps</a>
+    <a class="back" href="/apps/">← Mintoro / apps</a>
     <nav class="bot-tabs" aria-label="Choose bot">
       <a class="bot-tab" href="/apps/crypto-bot/" aria-current="page">crypto bot</a>
       <a class="bot-tab" href="/apps/nse-bot/">nse futures bot</a>
@@ -103,8 +103,11 @@
         <div class="eq-plot" data-f="eqplot" tabindex="0" aria-label="Equity curve of the running strategies. Touch or hover to read the balance; arrow keys step through it.">
           <svg viewBox="0 0 1000 180" preserveAspectRatio="none" aria-hidden="true">
             <line class="eq-base" data-f="base" x1="0" y1="-10" x2="1000" y2="-10"/>
-            <polygon class="eq-area" data-f="area" points=""/>
-            <polyline class="eq-line" data-f="line" points=""/>
+            <defs><clipPath id="eqUp"><rect data-f="clipup" x="0" y="-20" width="1000" height="0"/></clipPath><clipPath id="eqDn"><rect data-f="clipdn" x="0" y="0" width="1000" height="220"/></clipPath></defs>
+            <polygon class="eq-area" data-f="area" points="" clip-path="url(#eqUp)"/>
+            <polygon class="eq-area down" data-f="areadn" points="" clip-path="url(#eqDn)"/>
+            <polyline class="eq-line" data-f="line" points="" clip-path="url(#eqUp)"/>
+            <polyline class="eq-line down" data-f="linedn" points="" clip-path="url(#eqDn)"/>
           </svg>
           <div class="eq-cross" data-f="eqcross" hidden></div>
           <div class="eq-pin" data-f="eqpin" hidden></div>

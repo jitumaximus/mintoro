@@ -733,16 +733,22 @@
     eqBind();
     eqAxis();
     if (!c) { eqHide(); return; }
-    var line = q('line'), area = q('area'), base = q('base');
-    var down = c.end < c.first;
-    if (line.getAttribute('points') !== c.line) {
-      line.setAttribute('points', c.line);
-      area.setAttribute('points', '0,180 ' + c.line + ' 1000,180');
-      line.classList.remove('draw'); void line.getBBox(); if (!M.reduced()) line.classList.add('draw');
+    // above the start balance green, below it red: one line and one area (filled to the start line) per colour, clipped at the start line
+    var lines = [q('line'), q('linedn')], areas = [q('area'), q('areadn')], base = q('base');
+    var yb = Math.max(-20, Math.min(200, c.y(t.start_balance)));
+    if (lines[0].getAttribute('points') !== c.line || eq.yb !== yb) {
+      eq.yb = yb;
+      var pts = c.line.split(' '), x0 = pts[0].split(',')[0], x1 = pts[pts.length - 1].split(',')[0];
+      lines.forEach(function (l) {
+        l.setAttribute('points', c.line);
+        l.classList.remove('draw'); void l.getBBox(); if (!M.reduced()) l.classList.add('draw');
+      });
+      areas.forEach(function (a) { a.setAttribute('points', x0 + ',' + yb.toFixed(1) + ' ' + c.line + ' ' + x1 + ',' + yb.toFixed(1)); });
     }
-    line.classList.toggle('down', down);
-    area.classList.toggle('down', down);
-    var y = c.y(t.start_balance).toFixed(1);
+    q('clipup').setAttribute('height', (yb + 20).toFixed(1));
+    q('clipdn').setAttribute('y', yb.toFixed(1));
+    q('clipdn').setAttribute('height', (200 - yb).toFixed(1));
+    var y = yb.toFixed(1);
     base.setAttribute('y1', y); base.setAttribute('y2', y);
     if (eq.i >= 0) eqShow(Math.min(eq.i, eq.pts.length - 1));
   }
