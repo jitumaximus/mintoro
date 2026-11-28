@@ -214,8 +214,10 @@
   function renderPast(d) {
     var past = (d.books || []).filter(function (b) { return !isCurrent(b); });
     var sec = q('past');
+    var wasHidden = sec.hidden;
     sec.hidden = !past.length;
     if (!past.length) return;
+    if (wasHidden && location.hash === '#past') setTimeout(function () { sec.scrollIntoView({ block: 'start' }); }, 50);   // link from the apps page
     var pt = d.past_totals || past.reduce(function (a, b) {
       a.balance += b.balance || 0; a.start_balance += b.start_balance || 0;
       a.trades += b.trades; a.wins += b.wins; a.losses += b.losses; return a;

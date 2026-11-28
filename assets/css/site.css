@@ -607,6 +607,9 @@ table.sr-only { display: block; }
 }
 
 /* theme switch on the dashboards: a small round icon button, top right */
+.theme-btn.ico { width: 38px; height: 38px; padding: 0; border-radius: 50%; justify-content: center; gap: 0; color: var(--muted); }
+.theme-btn.ico:hover { color: var(--fg); }
+.theme-btn.ico .label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 .dash-bar .theme-btn { margin-left: auto; width: 34px; height: 34px; padding: 0; border-radius: 50%; justify-content: center; gap: 0; color: var(--muted); }
 .dash-bar .theme-btn:hover { color: var(--fg); border-color: var(--dash); }
 .dash-bar .theme-btn .label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
@@ -640,3 +643,44 @@ table.sr-only { display: block; }
 .face.m-sleep .fz text:nth-child(2) { animation-delay: 1s; } .face.m-sleep .fz text:nth-child(3) { animation-delay: 2s; }
 @keyframes fc-z { 0% { opacity: 0; transform: translate(0, 6px); } 30% { opacity: 1; } 100% { opacity: 0; transform: translate(6px, -8px); } }
 @keyframes bd-sleep { 0%, 100% { box-shadow: 0 0 0 0 transparent; } 50% { box-shadow: 0 0 0 6px var(--accent-soft); } }
+
+/* ---------- apps page revamp (28 Nov 2026) ---------- */
+.dot.idle { background: var(--muted); animation: none; }
+.app-strip { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 24px; font: 500 13px var(--sans); color: var(--muted); }
+.app-strip span { border: 1px solid var(--line); border-radius: 999px; padding: 6px 12px; background: var(--surface); }
+.app-strip span.on { color: var(--accent-text); border-color: color-mix(in srgb, var(--accent) 45%, var(--line)); }
+.app-grid { align-items: start; }
+.app-card { gap: 16px; }
+.app-card .face { width: 60px; height: 60px; border-radius: 18px; border-width: 1.5px; }
+.app-card .face svg { width: 36px; height: 28px; }
+.app-when { margin: -4px 0 0; font: 500 13px var(--sans); color: var(--muted); }
+.kpi4 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; font-family: var(--sans); }
+.kpi4 > div { border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; min-width: 0; position: relative; }
+.kpi4 .k { font-size: 11px; color: var(--muted); line-height: 1.3; }
+.kpi4 .kh { display: block; font-size: 10px; opacity: .8; }
+.kpi4 .v { font-size: 17px; font-weight: 600; margin-top: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-variant-numeric: tabular-nums; }
+.kspark { display: block; width: 100%; height: 18px; margin-top: 6px; overflow: visible; }
+.kspark path { fill: none; stroke: var(--accent); stroke-width: 1.6; vector-effect: non-scaling-stroke; stroke-linejoin: round; }
+.kspark.down path { stroke: var(--red); }
+.srows-head { display: flex; justify-content: space-between; font: 600 11px var(--sans); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); margin-bottom: -8px; }
+.srows { display: flex; flex-direction: column; gap: 6px; }
+.srow { display: grid; grid-template-columns: 10px minmax(0, auto) minmax(0, 1fr); align-items: center; gap: 10px; padding: 9px 12px;
+  border-radius: 10px; background: var(--surface2); font: 13px var(--sans); border: 1px solid transparent; }
+.srow .sw { width: 9px; height: 9px; border-radius: 50%; }
+.srow .sn { font-weight: 600; white-space: nowrap; }
+.srow .ss { text-align: right; color: var(--fg); min-width: 0; overflow-wrap: anywhere; }
+.srow .ss .tr + .tr::before { content: ' · '; color: var(--muted); }
+.srow .ss .arm { color: var(--warn); font-weight: 500; }
+.srow.win { border-color: color-mix(in srgb, var(--accent) 35%, transparent); background: color-mix(in srgb, var(--accent) 8%, var(--surface2));
+  animation: app-glow 2.8s ease-in-out infinite; }
+.srow.lose { border-color: color-mix(in srgb, var(--red) 25%, transparent); }
+@keyframes app-glow { 0%, 100% { box-shadow: 0 0 0 0 transparent; } 50% { box-shadow: 0 0 14px -2px color-mix(in srgb, var(--accent) 45%, transparent); } }
+.app-last { margin: 0; font: 13px var(--sans); line-height: 1.5; padding-top: 12px; border-top: 1px dashed var(--line); }
+.app-foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px; }
+.past-link { font: 500 13px var(--sans); color: var(--muted); }
+.past-link:hover { color: var(--fg); }
+@media (max-width: 520px) {
+  .kpi4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .app-card .face { width: 52px; height: 52px; border-radius: 16px; }
+}
+@media (prefers-reduced-motion: reduce) { .srow.win { animation: none; } }
